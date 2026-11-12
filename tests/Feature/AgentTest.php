@@ -103,7 +103,7 @@ test('booking a workshop pauses the run with an approval interrupt', function ()
     $user = User::factory()->create();
     $workshop = Workshop::factory()->create();
 
-    ConferenceAssistant::fake([new ToolCall('call_1', 'book_workshop', ['workshop_id' => $workshop->id])]);
+    ConferenceAssistant::fake([new ToolCall('call_1', 'book_workshop', ['workshop_id' => $workshop->id, 'company_role' => 'developer', 'company_name' => 'Acme'])]);
 
     $events = agUiEvents($this->actingAs($user)->postJson(route('agent'), agUiRun())->streamedContent());
 
@@ -127,7 +127,7 @@ test('a resume payload with an approval decision is accepted as a run', function
             ['id' => 'm2', 'role' => 'assistant', 'toolCalls' => [[
                 'id' => 'call_1',
                 'type' => 'function',
-                'function' => ['name' => 'book_workshop', 'arguments' => json_encode(['workshop_id' => $workshop->id])],
+                'function' => ['name' => 'book_workshop', 'arguments' => json_encode(['workshop_id' => $workshop->id, 'company_role' => 'developer', 'company_name' => 'Acme'])],
             ]]],
         ],
         'resume' => [['interruptId' => 'call_1', 'status' => 'resolved', 'payload' => ['approved' => true]]],

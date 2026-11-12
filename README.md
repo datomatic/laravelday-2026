@@ -14,7 +14,7 @@ La demo è un'app Laravel 13 con il programma di una conferenza: talk, agenda pe
 
 Il filo del talk è una sola azione, `add_to_agenda`. Vive in `AgendaService::add()` e ogni "porta" la chiama a modo suo.
 
-Stato al 12 novembre 2026: i 35 test Pest passano, gli asset compilano e la chat è stata provata nel browser con un modello OpenAI vero (schede A2UI, aggiunta all'agenda dalle schede, grafici).
+Stato al 12 novembre 2026: i 43 test Pest passano, gli asset compilano e la chat è stata provata nel browser con un modello OpenAI vero (schede A2UI, aggiunta all'agenda dalle schede, grafici).
 
 | Pezzo | Libreria | Versione |
 | --- | --- | --- |
@@ -82,7 +82,7 @@ Mcp::web('/mcp/conference', ConferenceServer::class)->middleware('auth:sanctum')
 | `add_to_agenda` | aggiunge un talk all'agenda | idempotente |
 | `clear_agenda` | svuota l'agenda | distruttiva |
 | `list_workshops` | elenca i workshop con i posti rimasti | read-only |
-| `book_workshop` | prenota un posto | restituisce `Response::error` se al completo |
+| `book_workshop` | prenota un posto, con ruolo in azienda (`App\Enums\CompanyRole`) e nome azienda | restituisce `Response::error` se al completo |
 
 La resource `conference://schedule` restituisce l'intero programma.
 
@@ -195,13 +195,23 @@ Differenze dalla v0.9 di cui tenere conto:
 - `Text` ha solo le varianti `body` e `caption`: il titolo è un heading Markdown, renderizzato da `@a2ui/markdown-it`;
 - `@a2ui/lit` 0.15 non ha ancora un export `v1`: processor e catalogo base arrivano da `@a2ui/web_core/v1_0`, da `@a2ui/lit` serve solo l'elemento `<a2ui-surface>`.
 
-Il pulsante emette l'evento `add_to_agenda` con `talk_id` (o `book_workshop` con `workshop_id`). Il client lo riceve e chiama direttamente la rotta Laravel `POST /agenda`, senza ripassare dal modello: nessuna attesa e nessun costo.
+Il pulsante emette l'evento `add_to_agenda` con `talk_id`. Il client lo riceve e chiama direttamente la rotta Laravel `POST /agenda`, senza ripassare dal modello: nessuna attesa e nessun costo.
+
+### Un form: la prenotazione di un workshop
+
+Per prenotare servono il ruolo in azienda e il nome dell'azienda, in tutti e tre i canali:
+
+- **pagina web**: ogni workshop ha un `<select>` per il ruolo e un campo per l'azienda, validati da `StoreWorkshopBookingRequest`;
+- **MCP e chat**: `book_workshop` li ha nello schema (il ruolo come `enum`). In chat, se l'utente non li ha detti, l'agente mostra il modulo con `show_booking_form` invece di chiederli a testo;
+- **A2UI**: il pulsante della scheda apre un `Modal` con un `ChoicePicker` (il ruolo) e un `TextField` (l'azienda).
+
+Nel form A2UI i campi sono legati al `dataModel` della surface con `{"@path": "/workshop_3/company_name"}`. Il pulsante di conferma ha due `checks` con la funzione `required`: il renderer lo tiene disabilitato finché non sono compilati. Al clic l'evento `book_workshop` porta nel `context` i valori letti da quegli stessi path, e il client li invia a `POST /workshops/{id}/bookings`.
 
 ### Catalogo custom: il grafico a barre
 
 Il catalogo base non ha grafici. `resources/js/a2ui/conference-catalog.js` definisce un componente `BarChart` (un elemento Lit, barre in CSS senza librerie) e lo aggiunge al catalogo base con `basicCatalog.derive()`, sotto l'id `urn:laravelday:a2ui:conference`. Il tool `show_chart` mostra i partecipanti per workshop o quante persone hanno messo in agenda ogni talk (`App\Enums\ChartSubject`).
 
-I tre tool A2UI (`show_talk_cards`, `show_workshop_cards`, `show_chart`) esistono solo per l'agente e non sono esposti dal server MCP.
+I quattro tool A2UI (`show_talk_cards`, `show_workshop_cards`, `show_booking_form`, `show_chart`) esistono solo per l'agente e non sono esposti dal server MCP.
 
 Far generare i componenti al modello sarebbe più vicino allo spirito di A2UI, ma meno affidabile in una demo dal vivo.
 
@@ -285,7 +295,7 @@ Il provider si cambia con la variabile `AI_PROVIDER`; i provider disponibili son
 
 ## Test e verifiche
 
-I 35 test Pest passano (151 asserzioni). Nei test l'agente usa il gateway finto di `laravel/ai`; il modello vero è stato provato a mano nel browser.
+I 43 test Pest passano (203 asserzioni). Nei test l'agente usa il gateway finto di `laravel/ai`; il modello vero è stato provato a mano nel browser.
 
 | File di test | Test | Copre |
 | --- | --- | --- |
@@ -295,7 +305,8 @@ I 35 test Pest passano (151 asserzioni). Nei test l'agente usa il gateway finto 
 | `tests/Feature/AuthTest.php` | 3 | login e logout |
 | `tests/Feature/A2uiSurfaceBuilderTest.php` | 3 | `Row` con badge della track, schede workshop, id validi per A2UI 1.0 |
 | `tests/Feature/ShowChartTest.php` | 3 | dati dei due grafici, soggetto non valido |
-| `tests/Feature/AgUiHistoryTest.php` | 2 | ricostruzione del `call_id` dei tool nella cronologia AG-UI |
+| `tests/Feature/AgUiHistoryTest.php` | 2 | ricostruzione del `call_id` dei tool nella cronologia AG-UI, anche per la chiamata in attesa di approvazione |
+| `tests/Feature/ShowBookingFormTest.php` | 2 | modulo di prenotazione A2UI mostrato dall'agente |
 
 Si lanciano con `php artisan test --compact`.
 
@@ -313,7 +324,7 @@ Prima del talk conviene provare tutto nel browser, in quest'ordine: una ricerca 
 
 - **Nessuno stato condiviso AG-UI.** `laravel/ai` 1.3 non emette `STATE_SNAPSHOT` né `STATE_DELTA`. L'agenda si aggiorna perché il client ricarica le zone della pagina quando arriva il risultato di un tool.
 - **A2UI non è nativo.** Né `laravel/ai` né `laravel/mcp` lo supportano: il JSON è costruito a mano in `A2uiSurfaceBuilder` e trasportato come risultato di un tool.
-- **Bug di `laravel/ai` 1.3 con la cronologia AG-UI.** Ricostruendo i messaggi del client perde il `call_id` dei tool e OpenAI risponde 400 dal secondo turno. `App\Ai\AgUiHistory` lo ripristina; si può togliere quando il pacchetto lo corregge.
+- **Bug di `laravel/ai` 1.3 con la cronologia AG-UI.** Ricostruendo i messaggi del client perde il `call_id` dei tool e OpenAI risponde 400 dal secondo turno. `App\Ai\AgUiHistory` lo ripristina. La chiamata in attesa di approvazione non ha ancora un risultato: le dà come `call_id` il suo stesso id, altrimenti dopo «Approva» OpenAI riceve `call_id: null`. Si può togliere quando il pacchetto lo corregge.
 - **WebMCP è sperimentale.** Origin trial, API che ha cambiato posto, nessuna prova fatta su un Chrome abilitato.
 
 Altre cose da sapere:

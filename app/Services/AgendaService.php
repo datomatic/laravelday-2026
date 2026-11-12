@@ -7,6 +7,7 @@ use App\Models\AgendaItem;
 use App\Models\Talk;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\ValidationException;
 
 class AgendaService
 {
@@ -36,8 +37,23 @@ class AgendaService
             ->get();
     }
 
+    /**
+     * @throws ValidationException
+     */
     public function add(User $user, Talk $talk): AgendaItem
     {
+        $overlapping = Talk::where('id', '!=', $talk->id)
+            ->whereHas('agendaItems', fn ($items) => $items->where('user_id', $user->id))
+            ->where('starts_at', '<', $talk->ends_at)
+            ->where('ends_at', '>', $talk->starts_at)
+            ->first();
+
+        if ($overlapping) {
+            throw ValidationException::withMessages([
+                'talk_id' => "Alle {$overlapping->starts_at->format('H:i')} hai già in agenda \"{$overlapping->title}\".",
+            ]);
+        }
+
         return AgendaItem::firstOrCreate(['user_id' => $user->id, 'talk_id' => $talk->id]);
     }
 

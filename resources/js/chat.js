@@ -4,6 +4,7 @@ import '@a2ui/lit'; // registers the <a2ui-surface> element
 import { conferenceCatalog } from './a2ui/conference-catalog';
 import { renderMarkdown } from '@a2ui/markdown-it';
 import { csrfToken, postJson, refreshLiveRegions } from './live-regions';
+import { createEventLog } from './ag-ui-log';
 
 // A2UI Text components may carry Markdown: render it with markdown-it, sanitized by DOMPurify.
 setMarkdownRenderer(renderMarkdown);
@@ -17,7 +18,7 @@ if (chat) {
     const input = document.getElementById('chat-input');
 
     // Tool results that carry A2UI messages instead of text for the model to summarise.
-    const A2UI_TOOLS = ['show_talk_cards', 'show_workshop_cards', 'show_chart'];
+    const A2UI_TOOLS = ['show_talk_cards', 'show_workshop_cards', 'show_booking_form', 'show_chart'];
     // Tools that change server state: the page regions are refreshed when they complete.
     const MUTATING_TOOLS = ['add_to_agenda', 'clear_agenda', 'book_workshop'];
 
@@ -29,6 +30,7 @@ if (chat) {
     // crypto.randomUUID() only exists in secure contexts (https or localhost), not on http://laravelday.test.
     const messageId = () => crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
+    const logEvent = createEventLog(events);
     const toolNames = {};
     let assistantBubble = null;
 
@@ -40,13 +42,26 @@ if (chat) {
     };
 
     const bubble = (role, text = '') => {
-        const element = document.createElement('p');
+        const element = document.createElement('div');
         element.className = role === 'user'
             ? 'ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-red-600 px-3.5 py-2 text-white shadow-sm'
-            : 'mr-auto w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-3.5 py-2 shadow-sm';
+            : 'chat-markdown mr-auto w-fit max-w-[85%] rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-3.5 py-2 shadow-sm';
         element.textContent = text;
 
         return append(element);
+    };
+
+    // The reply streams in chunks: re-render the whole text each time, dropping renders overtaken by newer chunks.
+    const appendMarkdown = async (element, delta) => {
+        const text = (element.dataset.markdown ?? '') + delta;
+        element.dataset.markdown = text;
+
+        const html = await renderMarkdown(text);
+
+        if (element.dataset.markdown === text) {
+            element.innerHTML = html;
+            messages.scrollTop = messages.scrollHeight;
+        }
     };
 
     const note = (text, tone = 'text-zinc-400') => {
@@ -71,9 +86,20 @@ if (chat) {
         const { name, context = {} } = action.event ?? action;
 
         try {
-            const message = name === 'add_to_agenda'
-                ? await postJson(chat.dataset.agendaUrl, { talk_id: context.talk_id })
-                : await postJson(chat.dataset.bookingUrl.replace('__ID__', context.workshop_id));
+            let message;
+
+            if (name === 'add_to_agenda') {
+                message = await postJson(chat.dataset.agendaUrl, { talk_id: context.talk_id });
+            } else if (name === 'book_workshop') {
+                message = await postJson(chat.dataset.bookingUrl.replace('__ID__', context.workshop_id), {
+                    // ChoicePicker binds a list of values, even with a single choice.
+                    company_role: [context.company_role].flat()[0],
+                    company_name: context.company_name,
+                });
+                document.querySelectorAll('a2ui-modal').forEach((modal) => modal.closeModal());
+            } else {
+                return; // open_booking_form: the Modal opens on its own.
+            }
 
             note(`✓ ${message}`, 'text-emerald-600');
         } catch (error) {
@@ -139,17 +165,13 @@ if (chat) {
 
     const subscriber = {
         onEvent({ event }) {
-            const item = document.createElement('li');
-            item.textContent = event.type;
-            events.append(item);
-            events.scrollTop = events.scrollHeight;
+            logEvent(event);
         },
         onTextMessageStartEvent() {
             assistantBubble = bubble('assistant');
         },
         onTextMessageContentEvent({ event }) {
-            assistantBubble.textContent += event.delta;
-            messages.scrollTop = messages.scrollHeight;
+            appendMarkdown(assistantBubble, event.delta);
         },
         onToolCallStartEvent({ event }) {
             toolNames[event.toolCallId] = event.toolCallName;
@@ -188,7 +210,19 @@ if (chat) {
     const fullscreenButton = document.getElementById('chat-fullscreen');
     const backdrop = document.getElementById('chat-backdrop');
 
+    const minimizeButton = document.getElementById('chat-minimize');
+
+    const setMinimized = (minimized) => {
+        chat.toggleAttribute('data-minimized', minimized);
+        minimizeButton.setAttribute('aria-pressed', String(minimized));
+        minimizeButton.setAttribute('aria-label', minimized ? 'Ripristina la chat' : 'Riduci a icona la chat');
+    };
+
     const setFullscreen = (fullscreen) => {
+        if (fullscreen) {
+            setMinimized(false);
+        }
+
         chat.toggleAttribute('data-fullscreen', fullscreen);
         backdrop.classList.toggle('hidden', !fullscreen);
         document.body.classList.toggle('overflow-hidden', fullscreen);
@@ -199,6 +233,20 @@ if (chat) {
     };
 
     fullscreenButton.addEventListener('click', () => setFullscreen(!chat.hasAttribute('data-fullscreen')));
+    minimizeButton.addEventListener('click', () => {
+        const minimized = !chat.hasAttribute('data-minimized');
+
+        if (minimized && chat.hasAttribute('data-fullscreen')) {
+            setFullscreen(false);
+        }
+
+        setMinimized(minimized);
+
+        if (!minimized) {
+            messages.scrollTop = messages.scrollHeight;
+            input.focus();
+        }
+    });
     backdrop.addEventListener('click', () => setFullscreen(false));
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && chat.hasAttribute('data-fullscreen')) {

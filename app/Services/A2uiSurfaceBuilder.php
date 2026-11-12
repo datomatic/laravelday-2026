@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CompanyRole;
 use App\Models\Talk;
 use App\Models\Workshop;
 use Illuminate\Support\Collection;
@@ -34,14 +35,16 @@ class A2uiSurfaceBuilder
             meta: "{$talk->starts_at->format('H:i')}–{$talk->ends_at->format('H:i')} · {$talk->room}",
             badge: $talk->track->label(),
             body: "{$talk->speaker->name} — {$talk->abstract}",
-            buttonLabel: "Aggiungi all'agenda",
-            action: ['name' => 'add_to_agenda', 'context' => ['talk_id' => $talk->id]],
+            footer: $this->button("talk_{$talk->id}_button", "Aggiungi all'agenda", ['name' => 'add_to_agenda', 'context' => ['talk_id' => $talk->id]]),
         ));
 
         return $this->surface('talks-'.str()->ulid(), $cards);
     }
 
     /**
+     * Each card opens a Modal with the booking form: its inputs are bound to the surface data model,
+     * and the submit button sends the bound values in the action context.
+     *
      * @param  Collection<int, Workshop>  $workshops
      * @return list<array<string, mixed>>
      */
@@ -52,11 +55,36 @@ class A2uiSurfaceBuilder
             title: $workshop->title,
             meta: "{$workshop->starts_at->format('H:i')}–{$workshop->ends_at->format('H:i')} · posti rimasti: {$workshop->seatsLeft()}",
             body: "{$workshop->speaker->name} — {$workshop->description}",
-            buttonLabel: 'Prenota un posto',
-            action: ['name' => 'book_workshop', 'context' => ['workshop_id' => $workshop->id]],
+            footer: $this->bookingForm($workshop),
         ));
 
-        return $this->surface('workshops-'.str()->ulid(), $cards);
+        $dataModel = $workshops->mapWithKeys(fn (Workshop $workshop) => [
+            "workshop_{$workshop->id}" => ['company_role' => [], 'company_name' => ''],
+        ])->all();
+
+        return $this->surface('workshops-'.str()->ulid(), $cards, $dataModel);
+    }
+
+    /**
+     * The same booking form as the workshop cards, shown on its own when the agent needs the details.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function bookingFormCard(Workshop $workshop): array
+    {
+        $key = "workshop_{$workshop->id}";
+
+        return [
+            ['version' => self::VERSION, 'createSurface' => [
+                'surfaceId' => 'booking-'.str()->ulid(),
+                'catalogId' => self::BASIC_CATALOG,
+                'components' => [
+                    ['id' => 'root', 'component' => 'Card', 'child' => "{$key}_form"],
+                    ...$this->bookingFormFields($workshop),
+                ],
+                'dataModel' => [$key => ['company_role' => [], 'company_name' => '']],
+            ]],
+        ];
     }
 
     /**
@@ -79,9 +107,10 @@ class A2uiSurfaceBuilder
 
     /**
      * @param  Collection<int, list<array<string, mixed>>>  $cards
+     * @param  array<string, mixed>  $dataModel
      * @return list<array<string, mixed>>
      */
-    private function surface(string $surfaceId, Collection $cards): array
+    private function surface(string $surfaceId, Collection $cards, array $dataModel = []): array
     {
         $root = [
             'id' => 'root',
@@ -94,25 +123,87 @@ class A2uiSurfaceBuilder
                 'surfaceId' => $surfaceId,
                 'catalogId' => self::BASIC_CATALOG,
                 'components' => [$root, ...$cards->flatten(1)->all()],
+                ...($dataModel ? ['dataModel' => $dataModel] : []),
             ]],
         ];
     }
 
     /**
-     * @param  array{name: string, context: array<string, mixed>}  $action
+     * @param  list<array<string, mixed>>  $footer  The components below the body: the first one is the footer itself.
      * @return list<array<string, mixed>>
      */
-    private function card(string $key, string $title, string $meta, string $body, string $buttonLabel, array $action, ?string $badge = null): array
+    private function card(string $key, string $title, string $meta, string $body, array $footer, ?string $badge = null): array
     {
         return [
             ['id' => $key, 'component' => 'Card', 'child' => "{$key}_content"],
-            ['id' => "{$key}_content", 'component' => 'Column', 'children' => ["{$key}_title", "{$key}_meta", "{$key}_body", "{$key}_button"]],
+            ['id' => "{$key}_content", 'component' => 'Column', 'children' => ["{$key}_title", "{$key}_meta", "{$key}_body", $footer[0]['id']]],
             // 1.0 Text only has the body and caption variants: the heading comes from Markdown.
             ['id' => "{$key}_title", 'component' => 'Text', 'text' => "#### {$title}"],
             ...$this->meta($key, $meta, $badge),
             ['id' => "{$key}_body", 'component' => 'Text', 'text' => $body],
-            ['id' => "{$key}_button", 'component' => 'Button', 'variant' => 'primary', 'child' => "{$key}_button_label", 'action' => ['event' => $action]],
-            ['id' => "{$key}_button_label", 'component' => 'Text', 'text' => $buttonLabel],
+            ...$footer,
+        ];
+    }
+
+    /**
+     * @param  array{name: string, context: array<string, mixed>}  $action
+     * @param  list<array<string, mixed>>  $checks
+     * @return list<array<string, mixed>>
+     */
+    private function button(string $id, string $label, array $action, array $checks = []): array
+    {
+        return [
+            ['id' => $id, 'component' => 'Button', 'variant' => 'primary', 'child' => "{$id}_label", 'action' => ['event' => $action], ...($checks ? ['checks' => $checks] : [])],
+            ['id' => "{$id}_label", 'component' => 'Text', 'text' => $label],
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function bookingForm(Workshop $workshop): array
+    {
+        $key = "workshop_{$workshop->id}";
+
+        return [
+            ['id' => "{$key}_booking", 'component' => 'Modal', 'trigger' => "{$key}_open", 'content' => "{$key}_form"],
+            ...$this->button("{$key}_open", 'Prenota un posto', ['name' => 'open_booking_form', 'context' => ['workshop_id' => $workshop->id]]),
+            ...$this->bookingFormFields($workshop),
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function bookingFormFields(Workshop $workshop): array
+    {
+        $key = "workshop_{$workshop->id}";
+        $role = ['@path' => "/{$key}/company_role"];
+        $company = ['@path' => "/{$key}/company_name"];
+
+        return [
+            ['id' => "{$key}_form", 'component' => 'Column', 'children' => ["{$key}_form_title", "{$key}_role", "{$key}_company", "{$key}_submit"]],
+            ['id' => "{$key}_form_title", 'component' => 'Text', 'text' => "#### Prenota: {$workshop->title}"],
+            [
+                'id' => "{$key}_role",
+                'component' => 'ChoicePicker',
+                'label' => 'Ruolo in azienda',
+                'variant' => 'mutuallyExclusive',
+                'displayStyle' => 'chips',
+                'options' => array_map(fn (CompanyRole $option) => ['label' => $option->label(), 'value' => $option->value], CompanyRole::cases()),
+                'value' => $role,
+            ],
+            ['id' => "{$key}_company", 'component' => 'TextField', 'label' => 'Nome azienda', 'placeholder' => 'Es. Acme S.r.l.', 'value' => $company],
+            ...$this->button(
+                "{$key}_submit",
+                'Conferma prenotazione',
+                ['name' => 'book_workshop', 'context' => ['workshop_id' => $workshop->id, 'company_role' => $role, 'company_name' => $company]],
+                // The renderer disables the button until both checks pass.
+                checks: [
+                    ['condition' => ['@call' => 'required', 'args' => ['value' => $role]], 'message' => 'Scegli il ruolo.'],
+                    ['condition' => ['@call' => 'required', 'args' => ['value' => $company]], 'message' => "Scrivi il nome dell'azienda."],
+                ],
+            ),
         ];
     }
 

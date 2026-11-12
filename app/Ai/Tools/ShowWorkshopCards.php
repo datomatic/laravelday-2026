@@ -22,7 +22,7 @@ class ShowWorkshopCards implements Tool
 
     public function description(): Stringable|string
     {
-        return "Mostra all'utente una scheda interattiva per ogni workshop, con i posti rimasti e il pulsante di prenotazione. Usalo al posto di un elenco testuale quando presenti i workshop.";
+        return "Mostra all'utente una scheda interattiva per ogni workshop, con i posti rimasti e un modulo di prenotazione (ruolo in azienda e nome azienda). Usalo al posto di un elenco testuale quando presenti i workshop.";
     }
 
     public function handle(Request $request): Stringable|string

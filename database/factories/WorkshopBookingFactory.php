@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\CompanyRole;
 use App\Models\User;
 use App\Models\Workshop;
 use App\Models\WorkshopBooking;
@@ -22,6 +23,8 @@ class WorkshopBookingFactory extends Factory
         return [
             'user_id' => User::factory(),
             'workshop_id' => Workshop::factory(),
+            'company_role' => fake()->randomElement(CompanyRole::cases()),
+            'company_name' => fake()->company(),
         ];
     }
 }

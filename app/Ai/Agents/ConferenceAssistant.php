@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Tools\ShowBookingForm;
 use App\Ai\Tools\ShowChart;
 use App\Ai\Tools\ShowTalkCards;
 use App\Ai\Tools\ShowWorkshopCards;
@@ -32,6 +33,9 @@ class ConferenceAssistant implements Agent, HasTools
 
         - Per presentare dei talk usa show_talk_cards con gli id trovati con search_talks, invece di elencarli a testo.
         - Per presentare i workshop usa show_workshop_cards.
+        - Per prenotare un workshop servono il ruolo in azienda e il nome dell'azienda.
+          Se l'utente li ha già detti usa book_workshop; altrimenti mostra il modulo con show_booking_form,
+          senza chiederli a testo. Non inventarli.
         - Per grafici e statistiche usa show_chart: non disegnare grafici a testo e non usare show_talk_cards.
         - Dopo aver mostrato delle schede aggiungi solo una frase di commento: non ripetere il contenuto delle schede.
         - Non inventare talk, orari o id: usa sempre i tool.
@@ -54,6 +58,7 @@ class ConferenceAssistant implements Agent, HasTools
             (new McpServerTool(new ClearAgendaTool))->requireApproval("Tutti i talk verranno rimossi dall'agenda."),
             app(ShowTalkCards::class),
             app(ShowWorkshopCards::class),
+            app(ShowBookingForm::class),
             app(ShowChart::class),
         ];
     }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CompanyRole;
 use App\Models\User;
 use App\Models\Workshop;
 use App\Models\WorkshopBooking;
@@ -22,9 +23,9 @@ class WorkshopBookingService
     /**
      * @throws ValidationException
      */
-    public function book(User $user, Workshop $workshop): WorkshopBooking
+    public function book(User $user, Workshop $workshop, CompanyRole $companyRole, string $companyName): WorkshopBooking
     {
-        return DB::transaction(function () use ($user, $workshop): WorkshopBooking {
+        return DB::transaction(function () use ($user, $workshop, $companyRole, $companyName): WorkshopBooking {
             $existing = $workshop->bookings()->where('user_id', $user->id)->first();
 
             if ($existing) {
@@ -37,7 +38,11 @@ class WorkshopBookingService
                 ]);
             }
 
-            return $workshop->bookings()->create(['user_id' => $user->id]);
+            return $workshop->bookings()->create([
+                'user_id' => $user->id,
+                'company_role' => $companyRole,
+                'company_name' => $companyName,
+            ]);
         });
     }
 }

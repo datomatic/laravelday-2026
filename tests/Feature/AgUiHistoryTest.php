@@ -30,14 +30,14 @@ test('replayed tool calls get the provider call id from their tool result', func
         ->and($call->resultId)->toBe('call_1');
 });
 
-test('tool calls without a matching result are left untouched', function () {
+test('a tool call waiting for approval uses its own id as the provider call id', function () {
     $request = Request::create('/agent', 'POST', server: ['CONTENT_TYPE' => 'application/json'], content: json_encode([
         'threadId' => 'thread-1',
         'runId' => 'run-2',
         'messages' => [
             ['id' => 'm1', 'role' => 'user', 'content' => 'Prenotami il workshop.'],
             ['id' => 'fc_1', 'role' => 'assistant', 'toolCalls' => [
-                ['id' => 'fc_1', 'type' => 'function', 'function' => ['name' => 'book_workshop', 'arguments' => '{"workshop_id":1}']],
+                ['id' => 'fc_1', 'type' => 'function', 'function' => ['name' => 'book_workshop', 'arguments' => '{"workshop_id":1,"company_role":"developer","company_name":"Acme"}']],
             ]],
         ],
         'tools' => [],
@@ -46,5 +46,5 @@ test('tool calls without a matching result are left untouched', function () {
 
     $history = AgUiHistory::withToolCallResultIds(AgentUserInteraction::chat($request)->history());
 
-    expect(collect($history)->whereInstanceOf(AssistantMessage::class)->first()->toolCalls->first()->resultId)->toBeNull();
+    expect(collect($history)->whereInstanceOf(AssistantMessage::class)->first()->toolCalls->first()->resultId)->toBe('fc_1');
 });

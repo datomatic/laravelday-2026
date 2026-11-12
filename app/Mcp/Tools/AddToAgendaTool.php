@@ -6,6 +6,7 @@ use App\Models\Talk;
 use App\Services\AgendaService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
+use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
@@ -26,7 +27,11 @@ class AddToAgendaTool extends Tool
 
         $talk = Talk::find($validated['talk_id']);
 
-        $agenda->add($request->user(), $talk);
+        try {
+            $agenda->add($request->user(), $talk);
+        } catch (ValidationException $exception) {
+            return Response::error($exception->getMessage());
+        }
 
         return Response::text("\"{$talk->title}\" aggiunto all'agenda ({$talk->starts_at->format('H:i')}, {$talk->room}).");
     }

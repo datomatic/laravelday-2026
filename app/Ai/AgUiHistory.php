@@ -12,6 +12,8 @@ class AgUiHistory
      * laravel/ai rebuilds AG-UI tool calls without their resultId, so OpenAI receives a
      * function_call item with no call_id and rejects the second turn with a 400.
      * The provider call id travels back as the id of the matching tool result message.
+     * A call still waiting for approval has no result yet: its own id becomes the call_id,
+     * and laravel/ai copies it onto the result it creates once the call is approved.
      *
      * @param  iterable<int, Message>  $history
      * @return list<Message>
@@ -28,7 +30,7 @@ class AgUiHistory
 
         $history->whereInstanceOf(AssistantMessage::class)->each(
             fn (AssistantMessage $message) => $message->toolCalls->each(
-                fn ($call) => $call->resultId ??= $resultIds->get($call->id),
+                fn ($call) => $call->resultId ??= $resultIds->get($call->id, $call->id),
             ),
         );
 

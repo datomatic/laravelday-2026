@@ -80,6 +80,12 @@ a2ui-surface {
 
 /* A2UI components render in light DOM, so Tailwind's preflight resets their headings: restore a clear hierarchy. */
 a2ui-surface {
+    /* The booking form opened by the workshop cards. */
+    .a2ui-modal-content {
+        --a2ui-column-gap: 0.75rem;
+        width: min(28rem, 90vw);
+    }
+
     .a2ui-card {
         transition:
             border-color 150ms,
@@ -128,6 +134,62 @@ a2ui-surface a2ui-basic-text[aria-label^='Track '] {
 }
 
 /* BarChart: custom A2UI component from resources/js/a2ui/conference-catalog.js */
+/* Assistant replies in the chat are Markdown rendered to HTML: restore what preflight resets. */
+.chat-markdown {
+    & > * + * {
+        margin-top: 0.5rem;
+    }
+
+    h1, h2, h3, h4 {
+        font-weight: 600;
+        color: var(--color-zinc-900);
+    }
+
+    ul {
+        list-style: disc;
+        padding-left: 1.25rem;
+    }
+
+    ol {
+        list-style: decimal;
+        padding-left: 1.25rem;
+    }
+
+    li + li {
+        margin-top: 0.125rem;
+    }
+
+    strong {
+        font-weight: 600;
+        color: var(--color-zinc-900);
+    }
+
+    a {
+        color: var(--color-red-600);
+        text-decoration: underline;
+    }
+
+    code {
+        font-family: var(--font-mono);
+        font-size: 0.8em;
+        background: var(--color-zinc-100);
+        border-radius: 0.25rem;
+        padding: 0.05rem 0.3rem;
+    }
+
+    pre {
+        overflow-x: auto;
+        background: var(--color-zinc-100);
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+
+        code {
+            background: none;
+            padding: 0;
+        }
+    }
+}
+
 .bar-chart {
     display: grid;
     gap: 0.5rem;
@@ -174,4 +236,13 @@ a2ui-surface a2ui-basic-text[aria-label^='Track '] {
     font-family: var(--font-mono);
     text-align: right;
     color: var(--color-zinc-900);
+}
+
+/* Scrollable but without a visible scrollbar (chat messages and event log). */
+@utility scrollbar-none {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }

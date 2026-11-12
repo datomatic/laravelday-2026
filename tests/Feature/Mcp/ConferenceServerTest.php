@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\CompanyRole;
 use App\Enums\Track;
 use App\Mcp\Resources\ScheduleResource;
 use App\Mcp\Servers\ConferenceServer;
@@ -54,6 +55,17 @@ test('add to agenda rejects a missing talk', function () {
     expect(AgendaItem::count())->toBe(0);
 });
 
+test('add to agenda fails when the talk overlaps one already in the agenda', function () {
+    $user = User::factory()->create();
+    AgendaItem::factory()->for($user)->for(Talk::factory()->state(['starts_at' => '2026-11-26 10:00', 'ends_at' => '2026-11-26 10:40']))->create();
+    $overlapping = Talk::factory()->create(['starts_at' => '2026-11-26 10:00', 'ends_at' => '2026-11-26 10:40']);
+
+    ConferenceServer::actingAs($user)->tool(AddToAgendaTool::class, ['talk_id' => $overlapping->id])
+        ->assertHasErrors(['hai già in agenda']);
+
+    expect(AgendaItem::where('talk_id', $overlapping->id)->exists())->toBeFalse();
+});
+
 test('show agenda lists only the talks of the authenticated user', function () {
     $user = User::factory()->create();
     $mine = AgendaItem::factory()->for($user)->create();
@@ -84,13 +96,27 @@ test('list workshops reports the seats left', function () {
         ->assertStructuredContent(fn (AssertableJson $json) => $json->where('workshops.0.seats_left', 2)->etc());
 });
 
-test('book workshop reserves a seat', function () {
+test('book workshop reserves a seat with role and company', function () {
     $user = User::factory()->create();
     $workshop = Workshop::factory()->create();
 
-    ConferenceServer::actingAs($user)->tool(BookWorkshopTool::class, ['workshop_id' => $workshop->id])->assertOk();
+    ConferenceServer::actingAs($user)
+        ->tool(BookWorkshopTool::class, ['workshop_id' => $workshop->id, 'company_role' => CompanyRole::Cto->value, 'company_name' => 'Acme'])
+        ->assertOk();
 
-    expect(WorkshopBooking::where('user_id', $user->id)->where('workshop_id', $workshop->id)->exists())->toBeTrue();
+    expect(WorkshopBooking::where('user_id', $user->id)->where('workshop_id', $workshop->id)->sole())
+        ->company_role->toBe(CompanyRole::Cto)
+        ->company_name->toBe('Acme');
+});
+
+test('book workshop asks for role and company', function () {
+    $user = User::factory()->create();
+    $workshop = Workshop::factory()->create();
+
+    ConferenceServer::actingAs($user)->tool(BookWorkshopTool::class, ['workshop_id' => $workshop->id])
+        ->assertHasErrors(['company role', 'company name']);
+
+    expect(WorkshopBooking::count())->toBe(0);
 });
 
 test('book workshop fails when the workshop is full', function () {
@@ -98,7 +124,8 @@ test('book workshop fails when the workshop is full', function () {
     $workshop = Workshop::factory()->create(['capacity' => 1]);
     WorkshopBooking::factory()->for($workshop)->create();
 
-    ConferenceServer::actingAs($user)->tool(BookWorkshopTool::class, ['workshop_id' => $workshop->id])
+    ConferenceServer::actingAs($user)
+        ->tool(BookWorkshopTool::class, ['workshop_id' => $workshop->id, 'company_role' => CompanyRole::Developer->value, 'company_name' => 'Acme'])
         ->assertHasErrors(['al completo']);
 
     expect(WorkshopBooking::where('user_id', $user->id)->exists())->toBeFalse();
