@@ -1,0 +1,177 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@layer base {
+    button:not(:disabled) {
+        cursor: pointer;
+    }
+}
+
+@utility btn {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-40;
+}
+
+@utility btn-primary {
+    @apply btn bg-red-600 text-white shadow-sm shadow-red-600/20 hover:bg-red-700;
+}
+
+@utility btn-ghost {
+    @apply btn border border-zinc-200 bg-white text-zinc-700 hover:border-red-200 hover:bg-red-50 hover:text-red-700;
+}
+
+@utility card {
+    @apply rounded-2xl border border-zinc-200/80 bg-white shadow-sm shadow-zinc-900/5;
+}
+
+@utility section-title {
+    @apply flex items-center gap-2 text-xs font-semibold tracking-widest text-zinc-500 uppercase;
+}
+
+/*
+ * A2UI renders inside shadow DOM, so it is themed through its inherited --a2ui-* custom properties.
+ * Its default sheet sets `color-scheme: light dark` on :root, which turns cards black when the OS is in dark mode.
+ */
+a2ui-surface {
+    color-scheme: light;
+
+    /* Derived sizes are resolved on :root by the default sheet, so they are redefined here too. */
+    --a2ui-font-size-m: 0.8125rem;
+    --a2ui-font-size-s: 0.75rem;
+    --a2ui-font-size-xs: 0.6875rem;
+    --a2ui-border-radius: 0.75rem;
+
+    --a2ui-color-background: var(--color-white);
+    --a2ui-color-on-background: var(--color-zinc-600);
+    --a2ui-color-surface: var(--color-white);
+    --a2ui-color-on-surface: var(--color-zinc-900);
+    --a2ui-color-border: var(--color-zinc-200);
+
+    --a2ui-color-primary: var(--color-red-600);
+    --a2ui-color-primary-hover: var(--color-red-700);
+    --a2ui-color-on-primary: var(--color-white);
+    --a2ui-color-secondary: var(--color-zinc-100);
+    --a2ui-color-secondary-hover: var(--color-zinc-200);
+    --a2ui-color-on-secondary: var(--color-zinc-700);
+
+    --a2ui-column-gap: 0.25rem;
+
+    --a2ui-card-padding: 0.875rem 1rem;
+    --a2ui-card-margin: 0 0 0.5rem;
+    --a2ui-card-border-radius: 1rem;
+    --a2ui-card-box-shadow: 0 1px 2px rgb(24 24 27 / 0.05);
+
+    --a2ui-text-color-text: var(--color-zinc-600);
+    --a2ui-text-caption-color: var(--color-zinc-500);
+
+    --a2ui-button-padding: 0.4rem 0.875rem;
+    --a2ui-button-margin: 0.5rem 0 0;
+    --a2ui-button-border-radius: 0.5rem;
+    --a2ui-button-font-weight: 500;
+    --a2ui-button-box-shadow: 0 1px 2px rgb(220 38 38 / 0.2);
+}
+
+/* A2UI components render in light DOM, so Tailwind's preflight resets their headings: restore a clear hierarchy. */
+a2ui-surface {
+    .a2ui-card {
+        transition:
+            border-color 150ms,
+            box-shadow 150ms;
+
+        &:hover {
+            border-color: var(--color-red-200);
+            box-shadow: 0 4px 12px rgb(24 24 27 / 0.08);
+        }
+    }
+
+    .a2ui-text h4 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        line-height: 1.3;
+        color: var(--color-zinc-900);
+    }
+
+    .a2ui-text-caption em {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        font-style: normal;
+    }
+}
+
+/* Track badge in A2UI cards: same palette as Track::badgeClasses(), keyed on the badge's aria-label. */
+a2ui-surface a2ui-basic-text[aria-label^='Track '] {
+    --badge: var(--color-zinc-600);
+
+    em {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        background: color-mix(in oklab, var(--badge) 8%, white);
+        color: var(--badge);
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--badge) 25%, white);
+        font-family: var(--font-sans);
+        font-weight: 500;
+    }
+
+    &[aria-label='Track AI'] { --badge: var(--color-violet-700); }
+    &[aria-label='Track Backend'] { --badge: var(--color-sky-700); }
+    &[aria-label='Track Frontend'] { --badge: var(--color-amber-700); }
+    &[aria-label='Track DevOps'] { --badge: var(--color-emerald-700); }
+    &[aria-label='Track Community'] { --badge: var(--color-pink-700); }
+}
+
+/* BarChart: custom A2UI component from resources/js/a2ui/conference-catalog.js */
+.bar-chart {
+    display: grid;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+
+    figcaption {
+        margin-bottom: 0.25rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--color-zinc-900);
+    }
+}
+
+.bar-chart-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) 3rem;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bar-chart-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-zinc-600);
+}
+
+.bar-chart-track {
+    height: 0.625rem;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: var(--color-zinc-100);
+}
+
+.bar-chart-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(to right, var(--color-red-500), var(--color-red-600));
+    transition: width 500ms ease-out;
+}
+
+.bar-chart-value {
+    font-family: var(--font-mono);
+    text-align: right;
+    color: var(--color-zinc-900);
+}

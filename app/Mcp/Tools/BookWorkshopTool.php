@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Mcp\Tools;
+
+use App\Models\Workshop;
+use App\Services\WorkshopBookingService;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\JsonSchema\Types\Type;
+use Illuminate\Validation\ValidationException;
+use Laravel\Mcp\Request;
+use Laravel\Mcp\Response;
+use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Attributes\Name;
+use Laravel\Mcp\Server\Tool;
+
+#[Name('book_workshop')]
+#[Description("Prenota un posto per l'utente a un workshop. I posti sono limitati. Usa list_workshops per trovare l'id.")]
+class BookWorkshopTool extends Tool
+{
+    public function handle(Request $request, WorkshopBookingService $bookings): Response
+    {
+        $validated = $request->validate([
+            'workshop_id' => ['required', 'integer', 'exists:workshops,id'],
+        ]);
+
+        $workshop = Workshop::find($validated['workshop_id']);
+
+        try {
+            $bookings->book($request->user(), $workshop);
+        } catch (ValidationException $exception) {
+            return Response::error($exception->getMessage());
+        }
+
+        return Response::text("Posto prenotato per \"{$workshop->title}\" ({$workshop->starts_at->format('H:i')}).");
+    }
+
+    /**
+     * @return array<string, Type>
+     */
+    public function schema(JsonSchema $schema): array
+    {
+        return [
+            'workshop_id' => $schema->integer()->description('Id del workshop da prenotare.')->required(),
+        ];
+    }
+}
