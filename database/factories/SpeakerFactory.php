@@ -20,6 +20,7 @@ class SpeakerFactory extends Factory
         return [
             'name' => fake()->name(),
             'company' => fake()->company(),
+            'photo' => 'images/speakers/'.fake()->slug(2).'.jpg',
             'bio' => fake()->paragraph(),
         ];
     }

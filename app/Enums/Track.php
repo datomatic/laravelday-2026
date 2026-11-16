@@ -24,11 +24,11 @@ enum Track: string
     public function badgeClasses(): string
     {
         return match ($this) {
-            self::Ai => 'bg-violet-50 text-violet-700 ring-violet-200',
-            self::Backend => 'bg-sky-50 text-sky-700 ring-sky-200',
-            self::Frontend => 'bg-amber-50 text-amber-700 ring-amber-200',
-            self::DevOps => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-            self::Community => 'bg-pink-50 text-pink-700 ring-pink-200',
+            self::Ai => 'bg-violet-100 text-violet-700 ring-violet-200',
+            self::Backend => 'bg-sky-100 text-sky-700 ring-sky-200',
+            self::Frontend => 'bg-amber-100 text-amber-700 ring-amber-200',
+            self::DevOps => 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+            self::Community => 'bg-pink-100 text-pink-700 ring-pink-200',
         };
     }
 }

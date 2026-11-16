@@ -2,27 +2,49 @@
 
 namespace App\Http\Controllers;
 
-use App\Ai\Agents\ConferenceAssistant;
-use App\Ai\AgUiHistory;
-use Illuminate\Http\Request;
-use Laravel\Ai\AgentUserInteraction\AgentUserInteraction;
-use Laravel\Ai\Responses\StreamableAgentResponse;
+use App\Enums\DemoStage;
+use App\Http\Requests\RunAgentRequest;
+use Generator;
+use NeuronAI\Agent\Adapters\AGUIAdapter;
+use NeuronAI\Agent\Frontend\AGUIInputTranslator;
+use NeuronAI\Chat\Messages\UserMessage;
+use NeuronAI\Workflow\Streaming\SSEEncoder;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class AgentController extends Controller
 {
     /**
      * AG-UI endpoint: reads a RunAgentInput and streams AG-UI events back.
-     * The client owns the history, so it is replayed on every run (and on approval resumes).
+     * A user message starts a turn; a "resume" array answers the approval interrupts of the paused run.
+     * The demo stage picks the agent: the base one answers with text, the generative one also with A2UI.
      */
-    public function __invoke(Request $request): StreamableAgentResponse
+    public function __invoke(RunAgentRequest $request, DemoStage $stage): StreamedResponse
     {
-        $chat = AgentUserInteraction::chat($request);
+        abort_if(! $stage->usesAgUi(), 404);
+        abort_if($stage === DemoStage::Admin && $request->user()->cannot('access-admin'), 403);
+        abort_if(! $request->isResume() && $request->prompt() === null, 422, 'The run contains no user message or approval decision.');
 
-        abort_if($chat->message() === null && $chat->decisions() === null, 422, 'The run contains no user message or approval decision.');
+        $adapter = new AGUIAdapter($request->threadId(), $request->input('runId'), $request->input('messages'));
+        $agent = app($stage->agent())->for($request->threadId())->setStreamAdapter(fn () => $adapter);
 
-        return (new ConferenceAssistant)
-            ->withMessages(AgUiHistory::withToolCallResultIds($chat->history()))
-            ->stream($chat)
-            ->usingProtocol($chat->protocol());
+        $events = $request->isResume()
+            ? $agent->submitInputs($request->all(), new AGUIInputTranslator)->events()
+            : $agent->stream(new UserMessage($request->prompt()));
+
+        // Start the run now: a refused run (e.g. an approval still pending) becomes an HTTP error, not a stream.
+        $events->valid();
+
+        return response()->stream(function () use ($events, $adapter): Generator {
+            try {
+                yield from SSEEncoder::encode($events);
+            } catch (Throwable $exception) {
+                report($exception);
+
+                foreach ($adapter->error($exception) as $event) {
+                    yield SSEEncoder::frame($event);
+                }
+            }
+        }, 200, $adapter->getHeaders());
     }
 }

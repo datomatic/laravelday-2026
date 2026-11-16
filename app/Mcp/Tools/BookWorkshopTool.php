@@ -14,9 +14,15 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
+use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
+use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 
 #[Name('book_workshop')]
 #[Description("Prenota un posto per l'utente a un workshop. I posti sono limitati. Usa list_workshops per trovare l'id. Servono il ruolo dell'utente in azienda e il nome dell'azienda: se non li conosci chiedili, non inventarli.")]
+#[IsDestructive(false)]
+#[IsIdempotent]
+#[IsOpenWorld(false)]
 class BookWorkshopTool extends Tool
 {
     public function handle(Request $request, WorkshopBookingService $bookings): Response

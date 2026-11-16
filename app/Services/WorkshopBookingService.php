@@ -45,4 +45,9 @@ class WorkshopBookingService
             ]);
         });
     }
+
+    public function cancelAll(User $user): int
+    {
+        return $user->workshopBookings()->delete();
+    }
 }

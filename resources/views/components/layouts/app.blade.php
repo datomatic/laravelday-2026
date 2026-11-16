@@ -4,18 +4,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name') }}</title>
+    <title>laravelday · Programma</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|jetbrains-mono:400,500,600" rel="stylesheet">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="48x48">
+    <link rel="icon" type="image/png" href="{{ asset('images/laravelday-icon.png') }}" sizes="180x180">
+    <link rel="apple-touch-icon" href="{{ asset('images/laravelday-icon.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-zinc-100 font-sans text-zinc-900 antialiased">
     <header class="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/80 backdrop-blur">
         <div class="mx-auto flex max-w-[90rem] items-center justify-between px-4 py-3 sm:px-6">
-            <a href="{{ route('schedule') }}" class="flex items-center gap-3">
-                <span class="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-red-500 to-red-700 font-bold text-white shadow-md shadow-red-600/30">L</span>
-                <span class="leading-tight">
-                    <span class="block text-lg font-bold tracking-tight"><span class="text-red-600">Laravel</span>Day</span>
-                    <span class="block text-xs text-zinc-500">Programma della conferenza</span>
-                </span>
+            <a href="{{ route('home') }}" class="flex items-center gap-3">
+                <img src="{{ asset('images/laravelday-logo.svg') }}" alt="laravelday" class="h-9 w-auto">
+                <span class="hidden border-l border-zinc-200 pl-3 text-xs text-zinc-500 sm:block">Programma della conferenza</span>
             </a>
             @auth
                 <form method="POST" action="{{ route('logout') }}" class="flex items-center gap-3 text-sm">
@@ -32,13 +34,13 @@
 
     <main class="mx-auto max-w-[90rem] px-4 py-6 sm:px-6">
         @session('status')
-            <p class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <p class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">
                 <span aria-hidden="true">✓</span> {{ $value }}
             </p>
         @endsession
 
         @if ($errors->any())
-            <p class="mb-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p class="mb-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-100 px-4 py-3 text-sm text-red-800">
                 <span aria-hidden="true">!</span> {{ $errors->first() }}
             </p>
         @endif

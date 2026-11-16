@@ -2,7 +2,9 @@
 
 use App\Enums\CompanyRole;
 use App\Enums\Track;
+use App\Mcp\Prompts\PlanMyDayPrompt;
 use App\Mcp\Resources\ScheduleResource;
+use App\Mcp\Resources\WorkshopsApp;
 use App\Mcp\Servers\ConferenceServer;
 use App\Mcp\Tools\AddToAgendaTool;
 use App\Mcp\Tools\BookWorkshopTool;
@@ -32,6 +34,16 @@ test('search talks filters by text and track', function () {
         ->assertDontSee('RAG con pgvector');
 });
 
+test('search talks returns the speaker id so the agent can show the speaker card', function () {
+    $talk = Talk::factory()->create(['title' => 'RAG con pgvector']);
+
+    ConferenceServer::tool(SearchTalksTool::class, ['query' => 'pgvector'])
+        ->assertOk()
+        ->assertStructuredContent(fn (AssertableJson $json) => $json
+            ->where('talks.0.speaker_id', $talk->speaker_id)
+            ->etc());
+});
+
 test('search talks rejects an unknown track', function () {
     ConferenceServer::tool(SearchTalksTool::class, ['track' => 'cucina'])
         ->assertHasErrors();
@@ -57,8 +69,8 @@ test('add to agenda rejects a missing talk', function () {
 
 test('add to agenda fails when the talk overlaps one already in the agenda', function () {
     $user = User::factory()->create();
-    AgendaItem::factory()->for($user)->for(Talk::factory()->state(['starts_at' => '2026-11-26 10:00', 'ends_at' => '2026-11-26 10:40']))->create();
-    $overlapping = Talk::factory()->create(['starts_at' => '2026-11-26 10:00', 'ends_at' => '2026-11-26 10:40']);
+    AgendaItem::factory()->for($user)->for(Talk::factory()->state(['starts_at' => '2026-11-18 10:00', 'ends_at' => '2026-11-18 10:40']))->create();
+    $overlapping = Talk::factory()->create(['starts_at' => '2026-11-18 10:00', 'ends_at' => '2026-11-18 10:40']);
 
     ConferenceServer::actingAs($user)->tool(AddToAgendaTool::class, ['talk_id' => $overlapping->id])
         ->assertHasErrors(['hai già in agenda']);
@@ -140,4 +152,54 @@ test('schedule resource returns the programme', function () {
 test('the mcp endpoint requires a token', function () {
     $this->postJson('/mcp/conference', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list'])
         ->assertUnauthorized();
+});
+
+test('each tool tells the client what it does with annotations', function (string $tool, array $annotations) {
+    expect((new $tool)->toArray()['annotations'])->toMatchArray($annotations);
+})->with([
+    'search talks' => [SearchTalksTool::class, ['readOnlyHint' => true, 'openWorldHint' => false]],
+    'show agenda' => [ShowAgendaTool::class, ['readOnlyHint' => true, 'openWorldHint' => false]],
+    'list workshops' => [ListWorkshopsTool::class, ['readOnlyHint' => true, 'openWorldHint' => false]],
+    'add to agenda' => [AddToAgendaTool::class, ['destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false]],
+    'clear agenda' => [ClearAgendaTool::class, ['destructiveHint' => true, 'idempotentHint' => true, 'openWorldHint' => false]],
+    'book workshop' => [BookWorkshopTool::class, ['destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false]],
+]);
+
+test('read tools declare the shape of the data they return', function (string $tool, string $key, string $model) {
+    $summary = $model::factory()->create()->toSummary();
+    $itemSchema = (new $tool)->toArray()['outputSchema']['properties'][$key]['items'];
+
+    expect($itemSchema['required'])->toEqualCanonicalizing(array_keys($summary))
+        ->and(array_keys($itemSchema['properties']))->toEqualCanonicalizing(array_keys($summary));
+})->with([
+    'search talks' => [SearchTalksTool::class, 'talks', Talk::class],
+    'show agenda' => [ShowAgendaTool::class, 'talks', Talk::class],
+    'list workshops' => [ListWorkshopsTool::class, 'workshops', Workshop::class],
+]);
+
+test('plan my day prompt asks the model to plan around the user interests with the existing tools', function () {
+    ConferenceServer::prompt(PlanMyDayPrompt::class, ['interests' => 'AI e testing'])
+        ->assertOk()
+        ->assertSee(['AI e testing', 'search_talks', 'show_agenda', 'add_to_agenda']);
+});
+
+test('plan my day prompt requires the interests', function () {
+    ConferenceServer::prompt(PlanMyDayPrompt::class)
+        ->assertHasErrors();
+});
+
+test('list workshops renders the workshops app in the client', function () {
+    $meta = (new ListWorkshopsTool)->toArray()['_meta']['ui'];
+
+    expect($meta['resourceUri'])->toBe((new WorkshopsApp)->uri())
+        ->and($meta['resourceUri'])->toStartWith('ui://');
+});
+
+test('workshops app is an html page that books through the book workshop tool', function () {
+    expect((new WorkshopsApp)->toArray()['mimeType'])->toBe('text/html;profile=mcp-app')
+        ->and((new WorkshopsApp)->resolvedAppMeta())->not->toHaveKey('domain');
+
+    ConferenceServer::resource(WorkshopsApp::class)
+        ->assertOk()
+        ->assertSee(['createMcpApp', 'book_workshop', CompanyRole::TechLead->label()]);
 });

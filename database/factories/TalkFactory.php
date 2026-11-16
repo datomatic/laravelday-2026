@@ -25,8 +25,8 @@ class TalkFactory extends Factory
             'abstract' => fake()->paragraph(),
             'track' => fake()->randomElement(Track::cases()),
             'room' => fake()->randomElement(['Sala Verona', 'Sala Arena']),
-            'starts_at' => '2026-11-26 10:00:00',
-            'ends_at' => '2026-11-26 10:40:00',
+            'starts_at' => '2026-11-18 10:00:00',
+            'ends_at' => '2026-11-18 10:40:00',
         ];
     }
 }

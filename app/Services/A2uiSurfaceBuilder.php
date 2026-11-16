@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CompanyRole;
+use App\Models\Speaker;
 use App\Models\Talk;
 use App\Models\Workshop;
 use Illuminate\Support\Collection;
@@ -19,15 +20,19 @@ class A2uiSurfaceBuilder
     public const BASIC_CATALOG = 'https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json';
 
     /**
-     * The basic catalog plus the BarChart component registered in resources/js/a2ui/conference-catalog.js.
+     * The basic catalog plus the Chart, DataTable and Stat components registered in resources/js/a2ui/conference-catalog.js.
      */
     public const CONFERENCE_CATALOG = 'urn:laravelday:a2ui:conference';
 
     /**
+     * The add button only shows when it is useful: a plenary talk has no alternative in its slot,
+     * a talk already in the agenda says so instead, and a talk overlapping the agenda could not be added.
+     *
      * @param  Collection<int, Talk>  $talks
+     * @param  Collection<int, Talk>  $agendaTalks
      * @return list<array<string, mixed>>
      */
-    public function talkCards(Collection $talks): array
+    public function talkCards(Collection $talks, Collection $agendaTalks): array
     {
         $cards = $talks->map(fn (Talk $talk) => $this->card(
             key: "talk_{$talk->id}",
@@ -35,7 +40,12 @@ class A2uiSurfaceBuilder
             meta: "{$talk->starts_at->format('H:i')}–{$talk->ends_at->format('H:i')} · {$talk->room}",
             badge: $talk->track->label(),
             body: "{$talk->speaker->name} — {$talk->abstract}",
-            footer: $this->button("talk_{$talk->id}_button", "Aggiungi all'agenda", ['name' => 'add_to_agenda', 'context' => ['talk_id' => $talk->id]]),
+            footer: match (true) {
+                $talk->isPlenary() => [],
+                $agendaTalks->contains('id', $talk->id) => [['id' => "talk_{$talk->id}_in_agenda", 'component' => 'Text', 'variant' => 'caption', 'text' => '✓ Nella tua agenda']],
+                $agendaTalks->contains(fn (Talk $chosen) => $chosen->overlaps($talk)) => [],
+                default => $this->button("talk_{$talk->id}_button", "Aggiungi all'agenda", ['name' => 'add_to_agenda', 'context' => ['talk_id' => $talk->id]]),
+            },
         ));
 
         return $this->surface('talks-'.str()->ulid(), $cards);
@@ -88,10 +98,43 @@ class A2uiSurfaceBuilder
     }
 
     /**
-     * @param  Collection<int, array{label: string, value: int, max?: int}>  $bars
+     * A profile card: photo and name side by side, then the bio and the speaker's sessions.
+     *
      * @return list<array<string, mixed>>
      */
-    public function barChart(string $title, Collection $bars): array
+    public function speakerCard(Speaker $speaker): array
+    {
+        $sessions = $speaker->talks->map(fn (Talk $talk) => "- {$talk->starts_at->format('H:i')} · {$talk->room} — {$talk->title}")
+            ->merge($speaker->workshops->map(fn (Workshop $workshop) => "- {$workshop->starts_at->format('H:i')} · Workshop — {$workshop->title}"))
+            ->implode("\n");
+
+        return [
+            ['version' => self::VERSION, 'createSurface' => [
+                'surfaceId' => 'speaker-'.str()->ulid(),
+                'catalogId' => self::BASIC_CATALOG,
+                'components' => [
+                    ['id' => 'root', 'component' => 'Card', 'child' => 'profile'],
+                    ['id' => 'profile', 'component' => 'Column', 'children' => ['header', 'bio', 'sessions']],
+                    ['id' => 'header', 'component' => 'Row', 'align' => 'center', 'children' => ['photo', 'identity']],
+                    ['id' => 'photo', 'component' => 'Image', 'url' => $speaker->photo_url, 'description' => $speaker->name, 'variant' => 'avatar', 'fit' => 'cover'],
+                    ['id' => 'identity', 'component' => 'Column', 'children' => ['name', 'company']],
+                    ['id' => 'name', 'component' => 'Text', 'text' => "#### {$speaker->name}"],
+                    ['id' => 'company', 'component' => 'Text', 'variant' => 'caption', 'text' => $speaker->company],
+                    ['id' => 'bio', 'component' => 'Text', 'text' => $speaker->bio],
+                    ['id' => 'sessions', 'component' => 'Text', 'text' => "**Sessioni**\n\n{$sessions}"],
+                ],
+            ]],
+        ];
+    }
+
+    /**
+     * A Chart.js chart: one value per label in each dataset.
+     *
+     * @param  list<string>  $labels
+     * @param  list<array{label: string, data: list<int|float>}>  $datasets
+     * @return list<array<string, mixed>>
+     */
+    public function chart(string $title, string $type, array $labels, array $datasets): array
     {
         return [
             ['version' => self::VERSION, 'createSurface' => [
@@ -99,8 +142,25 @@ class A2uiSurfaceBuilder
                 'catalogId' => self::CONFERENCE_CATALOG,
                 'components' => [
                     ['id' => 'root', 'component' => 'Card', 'child' => 'chart'],
-                    ['id' => 'chart', 'component' => 'BarChart', 'title' => $title, 'bars' => $bars->values()->all()],
+                    ['id' => 'chart', 'component' => 'Chart', 'title' => $title, 'type' => $type, 'labels' => $labels, 'datasets' => $datasets],
                 ],
+            ]],
+        ];
+    }
+
+    /**
+     * A surface whose components the model wrote itself, already checked by A2uiComponentValidator.
+     *
+     * @param  list<array<string, mixed>>  $components
+     * @return list<array<string, mixed>>
+     */
+    public function generated(array $components): array
+    {
+        return [
+            ['version' => self::VERSION, 'createSurface' => [
+                'surfaceId' => 'generated-'.str()->ulid(),
+                'catalogId' => self::CONFERENCE_CATALOG,
+                'components' => $components,
             ]],
         ];
     }
@@ -132,11 +192,11 @@ class A2uiSurfaceBuilder
      * @param  list<array<string, mixed>>  $footer  The components below the body: the first one is the footer itself.
      * @return list<array<string, mixed>>
      */
-    private function card(string $key, string $title, string $meta, string $body, array $footer, ?string $badge = null): array
+    private function card(string $key, string $title, string $meta, string $body, array $footer = [], ?string $badge = null): array
     {
         return [
             ['id' => $key, 'component' => 'Card', 'child' => "{$key}_content"],
-            ['id' => "{$key}_content", 'component' => 'Column', 'children' => ["{$key}_title", "{$key}_meta", "{$key}_body", $footer[0]['id']]],
+            ['id' => "{$key}_content", 'component' => 'Column', 'children' => ["{$key}_title", "{$key}_meta", "{$key}_body", ...($footer ? [$footer[0]['id']] : [])]],
             // 1.0 Text only has the body and caption variants: the heading comes from Markdown.
             ['id' => "{$key}_title", 'component' => 'Text', 'text' => "#### {$title}"],
             ...$this->meta($key, $meta, $badge),

@@ -20,8 +20,11 @@ class WorkshopBookingController extends Controller
             $request->validated('company_name'),
         );
 
+        $message = "Posto prenotato per \"{$workshop->title}\".";
+
+        // The A2UI booking form in the chat calls this same route with fetch, and shows the message in the conversation.
         return $request->expectsJson()
-            ? response()->json(['message' => "Posto prenotato per \"{$workshop->title}\"."], 201)
-            : back()->with('status', "Posto prenotato per \"{$workshop->title}\".");
+            ? response()->json(['message' => $message], 201)
+            : back()->with('status', $message);
     }
 }

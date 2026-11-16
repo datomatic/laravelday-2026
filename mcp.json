@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "conference": {
+      "type": "streamable-http",
+      "url": "https://laravelday.test/mcp/conference",
+      "headers": {
+        "Authorization": "Bearer 1|iqjoINHj8EOujsPyGbcfEmigaRIh82oHRT5kRAzUa613c6d1"
+      }
+    }
+  }
+}

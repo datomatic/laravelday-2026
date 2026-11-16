@@ -2,7 +2,9 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Prompts\PlanMyDayPrompt;
 use App\Mcp\Resources\ScheduleResource;
+use App\Mcp\Resources\WorkshopsApp;
 use App\Mcp\Tools\AddToAgendaTool;
 use App\Mcp\Tools\BookWorkshopTool;
 use App\Mcp\Tools\ClearAgendaTool;
@@ -30,5 +32,10 @@ class ConferenceServer extends Server
 
     protected array $resources = [
         ScheduleResource::class,
+        WorkshopsApp::class,
+    ];
+
+    protected array $prompts = [
+        PlanMyDayPrompt::class,
     ];
 }

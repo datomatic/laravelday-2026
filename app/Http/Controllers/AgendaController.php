@@ -18,10 +18,12 @@ class AgendaController extends Controller
         $talk = Talk::find($request->validated('talk_id'));
 
         $this->agenda->add($request->user(), $talk);
+        $message = "\"{$talk->title}\" aggiunto all'agenda.";
 
+        // The A2UI cards in the chat call this same route with fetch, and show the message in the conversation.
         return $request->expectsJson()
-            ? response()->json(['message' => "\"{$talk->title}\" aggiunto all'agenda."], 201)
-            : back()->with('status', "\"{$talk->title}\" aggiunto all'agenda.");
+            ? response()->json(['message' => $message], 201)
+            : back()->with('status', $message);
     }
 
     public function destroy(Request $request, Talk $talk): RedirectResponse

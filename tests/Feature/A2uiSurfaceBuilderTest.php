@@ -14,7 +14,7 @@ test('talk cards show the time and a labelled track badge in a row', function ()
         'ends_at' => today()->setTime(10, 55),
     ]);
 
-    $messages = app(A2uiSurfaceBuilder::class)->talkCards(collect([$talk->load('speaker')]));
+    $messages = app(A2uiSurfaceBuilder::class)->talkCards(collect([$talk->load('speaker')]), collect());
     $components = collect($messages[0]['createSurface']['components'])->keyBy('id');
     $key = "talk_{$talk->id}";
 
@@ -28,6 +28,24 @@ test('talk cards show the time and a labelled track badge in a row', function ()
             'text' => 'AI',
             'accessibility' => ['label' => 'Track AI'],
         ]);
+});
+
+test('talk cards show the add button only when the talk can be added', function () {
+    $opening = Talk::factory()->create(['starts_at' => today()->setTime(9, 30), 'ends_at' => today()->setTime(10, 10)]);
+    $chosen = Talk::factory()->create(['starts_at' => today()->setTime(10, 20), 'ends_at' => today()->setTime(10, 55)]);
+    $overlapping = Talk::factory()->create(['starts_at' => today()->setTime(10, 20), 'ends_at' => today()->setTime(10, 55)]);
+    $free = Talk::factory()->create(['starts_at' => today()->setTime(11, 20), 'ends_at' => today()->setTime(12, 0)]);
+    $freeParallel = Talk::factory()->create(['starts_at' => today()->setTime(11, 20), 'ends_at' => today()->setTime(12, 0)]);
+
+    $messages = app(A2uiSurfaceBuilder::class)->talkCards(Talk::with('speaker')->orderBy('id')->get(), collect([$chosen]));
+    $components = collect($messages[0]['createSurface']['components'])->keyBy('id');
+
+    expect($components["talk_{$opening->id}_content"]['children'])->toBe(["talk_{$opening->id}_title", "talk_{$opening->id}_meta", "talk_{$opening->id}_body"])
+        ->and($components["talk_{$chosen->id}_in_agenda"]['text'])->toBe('✓ Nella tua agenda')
+        ->and($components["talk_{$overlapping->id}_content"]['children'])->toHaveCount(3)
+        ->and($components["talk_{$free->id}_button"]['action']['event']['name'])->toBe('add_to_agenda')
+        ->and($components->keys()->filter(fn (string $id) => str_ends_with($id, '_button'))->values()->all())
+        ->toBe(["talk_{$free->id}_button", "talk_{$freeParallel->id}_button"]);
 });
 
 test('workshop cards keep a plain caption without a badge', function () {
@@ -69,7 +87,7 @@ test('component ids are valid identifiers as required by a2ui 1.0', function () 
     $builder = app(A2uiSurfaceBuilder::class);
 
     $ids = collect([
-        ...$builder->talkCards(collect([$talk->load('speaker')])),
+        ...$builder->talkCards(collect([$talk->load('speaker')]), collect()),
         ...$builder->workshopCards(collect([$workshop->load('speaker')])),
     ])->flatMap(fn (array $message) => array_column($message['createSurface']['components'], 'id'));
 

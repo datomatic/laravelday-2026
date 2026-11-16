@@ -1,29 +1,20 @@
-@foreach ($talks as $talk)
-    <li class="card group flex items-stretch gap-4 p-4 transition hover:border-red-200 hover:shadow-md" data-talk-id="{{ $talk->id }}">
-        <div class="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-zinc-50 font-mono text-xs text-zinc-500">
-            <span class="text-sm font-semibold text-zinc-900">{{ $talk->starts_at->format('H:i') }}</span>
-            <span>{{ $talk->ends_at->format('H:i') }}</span>
-        </div>
+@php($rooms = $talks->pluck('room')->unique()->values())
 
-        <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                <span class="rounded-full px-2 py-0.5 font-medium ring-1 ring-inset {{ $talk->track->badgeClasses() }}">{{ $talk->track->label() }}</span>
-                <span>{{ $talk->room }}</span>
-            </div>
-            <p class="mt-1 font-semibold leading-snug text-zinc-900">{{ $talk->title }}</p>
-            <p class="text-sm text-zinc-500">{{ $talk->speaker->name }}</p>
-        </div>
+@foreach ($rooms as $room)
+    <h3 class="hidden px-1 font-mono text-xs font-semibold tracking-wide text-zinc-500 uppercase sm:block">{{ $room }}</h3>
+@endforeach
 
-        <div class="flex items-center">
-            @if ($agendaTalks->contains($talk))
-                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 ring-inset">✓ In agenda</span>
+{{-- One row per time slot: parallel talks side by side, a talk alone in its slot spans every room. --}}
+@foreach ($talks->groupBy(fn ($talk) => $talk->starts_at->format('H:i')) as $slot)
+    @if ($slot->count() === 1)
+        @include('partials.talk-card', ['talk' => $slot->first(), 'plenary' => true])
+    @else
+        @foreach ($rooms as $room)
+            @if ($talk = $slot->firstWhere('room', $room))
+                @include('partials.talk-card', ['talk' => $talk, 'plenary' => false])
             @else
-                <form method="POST" action="{{ route('agenda.store') }}">
-                    @csrf
-                    <input type="hidden" name="talk_id" value="{{ $talk->id }}">
-                    <button class="btn-ghost">+ Agenda</button>
-                </form>
+                <div class="hidden sm:block"></div>
             @endif
-        </div>
-    </li>
+        @endforeach
+    @endif
 @endforeach

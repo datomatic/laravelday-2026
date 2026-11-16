@@ -12,11 +12,15 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
+use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 
 #[Name('add_to_agenda')]
 #[Description("Aggiunge un talk all'agenda personale dell'utente. Usa search_talks per trovare l'id del talk.")]
+#[IsDestructive(false)]
 #[IsIdempotent]
+#[IsOpenWorld(false)]
 class AddToAgendaTool extends Tool
 {
     public function handle(Request $request, AgendaService $agenda): Response

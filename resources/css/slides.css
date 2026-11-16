@@ -1,0 +1,485 @@
+@import 'tailwindcss';
+
+@source '../views/slides';
+
+:root {
+    --slide-ink: #18181b;
+    --slide-muted: #52525b;
+    --slide-paper: #f4f4f1;
+    --slide-accent: #dc2626;
+    --slide-code: #1c1b22;
+}
+
+body {
+    background: var(--slide-paper);
+}
+
+/*
+ * Drifting blobs behind the light slides. Slides with data-background-color paint over them.
+ * Each blob loops on its own path and period, so the pattern never visibly repeats.
+ */
+.slides-ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.slides-ambient span {
+    position: absolute;
+    width: 50vmax;
+    height: 50vmax;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.6;
+    animation: 10s ease-in-out infinite;
+}
+
+.slides-ambient span:nth-child(1) {
+    top: -15vmax;
+    left: -10vmax;
+    background: #fca5a5;
+    animation-name: ambient-drift-one;
+}
+
+.slides-ambient span:nth-child(2) {
+    right: -15vmax;
+    bottom: -20vmax;
+    background: #fdba74;
+    animation-name: ambient-drift-two;
+    animation-duration: 13s;
+    animation-delay: -4s;
+}
+
+.slides-ambient span:nth-child(3) {
+    top: 25%;
+    left: 35%;
+    width: 35vmax;
+    height: 35vmax;
+    background: #c4c4ca;
+    animation-name: ambient-drift-three;
+    animation-duration: 12s;
+    animation-delay: -7s;
+}
+
+@keyframes ambient-drift-one {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(30vmax, 10vmax) scale(1.2);
+    }
+
+    66% {
+        transform: translate(10vmax, 25vmax) scale(0.9);
+    }
+}
+
+@keyframes ambient-drift-two {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(-25vmax, -15vmax) scale(0.85);
+    }
+
+    66% {
+        transform: translate(-8vmax, -28vmax) scale(1.15);
+    }
+}
+
+@keyframes ambient-drift-three {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(-25vmax, 12vmax) scale(1.3);
+    }
+}
+
+/* Parked just past the right edge for most of the cycle, then a five-second pass to the left along the bottom. */
+.supercar {
+    position: absolute;
+    bottom: 1vh;
+    left: 100%;
+    height: 16vh;
+    aspect-ratio: 3 / 1;
+    animation: supercar-drive 40s linear infinite;
+    animation-delay: 6s;
+}
+
+.supercar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/*
+ * The wheels are cut out of the car picture and laid exactly over it, so they can spin.
+ * Positions are the hub centres measured on the original 2172×724 image.
+ */
+.supercar .supercar-wheel {
+    position: absolute;
+    height: auto;
+    aspect-ratio: 1;
+    animation: supercar-wheel 0.5s linear infinite;
+}
+
+.supercar .supercar-wheel-front {
+    top: 50.14%;
+    left: 13.17%;
+    width: 15.1%;
+}
+
+.supercar .supercar-wheel-rear {
+    top: 50.28%;
+    left: 72.51%;
+    width: 15.47%;
+}
+
+@keyframes supercar-wheel {
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes supercar-drive {
+    0%,
+    87% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(calc(-100vw - 100%));
+    }
+}
+
+.slides-flyby {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Same 40s cycle as the car, but half a cycle apart: the plane crosses the top, left to right, while the car is parked. */
+.airplane {
+    position: absolute;
+    top: 14vh;
+    right: 100%;
+    height: 18vh;
+    aspect-ratio: 1400 / 541;
+    animation: airplane-fly 40s linear infinite;
+    animation-delay: -8s;
+}
+
+.airplane img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    animation: airplane-bob 2.4s ease-in-out infinite;
+}
+
+@keyframes airplane-fly {
+    0%,
+    80% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(calc(100vw + 100%));
+    }
+}
+
+@keyframes airplane-bob {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-1.5vh) rotate(-1.5deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .slides-ambient span {
+        animation: none;
+    }
+
+    .supercar,
+    .airplane {
+        display: none;
+    }
+}
+
+html.print-pdf .slides-ambient,
+html.print-pdf .slides-flyby {
+    display: none;
+}
+
+.reveal {
+    position: relative;
+    z-index: 1;
+    font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    font-size: 40px;
+    color: var(--slide-ink);
+}
+
+.reveal .slides {
+    text-align: left;
+}
+
+.reveal .slides > section,
+.reveal .slides > section > section {
+    padding: 72px 96px;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.reveal h1,
+.reveal h2,
+.reveal h3 {
+    margin: 0;
+    font-family: inherit;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: inherit;
+    text-transform: none;
+}
+
+.reveal h1 {
+    font-size: 120px;
+}
+
+.reveal h2 {
+    font-size: 72px;
+}
+
+.reveal h3 {
+    font-size: 44px;
+}
+
+.reveal p,
+.reveal li {
+    line-height: 1.35;
+}
+
+.reveal ul,
+.reveal ol {
+    margin: 0;
+}
+
+.reveal a {
+    color: var(--slide-accent);
+}
+
+.reveal code {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-ligatures: none;
+}
+
+.reveal :not(pre) > code {
+    padding: 0.05em 0.3em;
+    border-radius: 0.25em;
+    background: #e4e4e0;
+    font-size: 0.9em;
+}
+
+/* Each line-highlight step is a copy of the code block, pinned over it: the pre must be their anchor. */
+.reveal pre {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    box-shadow: none;
+    font-size: 28px;
+    line-height: 1.45;
+}
+
+.reveal pre code {
+    max-height: 760px;
+    padding: 32px 40px;
+    border-radius: 24px;
+    background: var(--slide-code);
+}
+
+.reveal .hljs.has-highlights tr:not(.highlight-line) {
+    opacity: 0.3;
+}
+
+.reveal .eyebrow {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 26px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slide-accent);
+}
+
+.reveal .muted {
+    color: var(--slide-muted);
+}
+
+.reveal .card {
+    padding: 32px 40px;
+    border: 2px solid #e4e4e0;
+    border-radius: 24px;
+    background: #fdfdfb;
+}
+
+.reveal .divider {
+    color: #fdfdfb;
+}
+
+.reveal .divider .eyebrow {
+    color: #fecaca;
+}
+
+.reveal .divider a {
+    color: #fca5a5;
+}
+
+/* reveal.css is unlayered, so it beats Tailwind's list utilities. No flex here: it would drop the bullets. */
+.reveal .bio-list {
+    padding-left: 1.2em;
+    list-style: disc;
+}
+
+.reveal .bio-list li + li {
+    margin-top: 16px;
+}
+
+.reveal .bio-list li::marker {
+    color: var(--slide-accent);
+}
+
+/* Speaker photo: a tilted frame over a red block tilted the other way. */
+.reveal .portrait {
+    position: relative;
+    flex: none;
+    width: 600px;
+    height: 780px;
+    margin-right: 40px;
+}
+
+.reveal .portrait::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 40px;
+    background: var(--slide-accent);
+    transform: rotate(-5deg) translate(-16px, 12px);
+}
+
+.reveal .portrait img {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    object-fit: cover;
+    object-position: 50% 20%;
+    border: 12px solid #fdfdfb;
+    border-radius: 40px;
+    box-shadow: 0 30px 60px -20px rgb(24 24 27 / 0.35);
+    transform: rotate(2.5deg);
+}
+
+/* Code slides are dark edge to edge: the code block melts into the slide instead of sitting in a box. */
+.reveal .code-slide {
+    color: #fdfdfb;
+}
+
+.reveal .code-slide .eyebrow {
+    color: #fca5a5;
+}
+
+.reveal .code-slide .muted {
+    color: #a1a1aa;
+}
+
+.reveal .code-slide :not(pre) > code {
+    background: #34333d;
+    color: #fdfdfb;
+}
+
+/* Same colour as the slide, not transparent: each step must hide the one below it. */
+.reveal .code-slide pre code {
+    padding: 0;
+    border-radius: 0;
+    background: var(--slide-code);
+}
+
+.reveal .demo {
+    color: #fdfdfb;
+}
+
+.reveal .demo .eyebrow {
+    color: #fca5a5;
+}
+
+.reveal .demo a {
+    color: #fdfdfb;
+}
+
+/*
+ * The logo has black lettering: the light plate keeps it readable on the dark and red slides.
+ * On screen it is pinned to the viewport corner, so the gap from the top and from the right stays equal
+ * even when the 16:9 canvas is letterboxed. Sizes match 80px and 24px on the 1920×1080 canvas.
+ */
+.deck-logo,
+.reveal .slide-logo {
+    width: auto;
+    margin: 0;
+    border-radius: 16px;
+    background: #fdfdfb;
+}
+
+.deck-logo {
+    --logo-gap: min(2.2vh, 1.25vw);
+
+    position: fixed;
+    top: var(--logo-gap);
+    right: var(--logo-gap);
+    z-index: 2;
+    height: min(7.4vh, 4.2vw);
+    padding: min(1.1vh, 0.6vw) min(1.85vh, 1vw);
+    border-radius: min(1.5vh, 0.8vw);
+}
+
+.reveal .slide-logo {
+    display: none;
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    height: 80px;
+    padding: 12px 20px;
+}
+
+html.print-pdf .deck-logo {
+    display: none;
+}
+
+html.print-pdf .reveal .slide-logo {
+    display: block;
+}
+
+.reveal .slide-number {
+    background: transparent;
+    color: var(--slide-muted);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 18px;
+}
+
+.reveal .progress {
+    color: var(--slide-accent);
+}

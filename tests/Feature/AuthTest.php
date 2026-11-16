@@ -3,14 +3,14 @@
 use App\Models\User;
 
 test('guests are redirected to the login page', function () {
-    $this->get(route('schedule'))->assertRedirect(route('login'));
+    $this->get(route('home'))->assertRedirect(route('login'));
 });
 
 test('a user can log in and log out', function () {
     $user = User::factory()->create();
 
     $this->post(route('login.store'), ['email' => $user->email, 'password' => 'password'])
-        ->assertRedirect(route('schedule'));
+        ->assertRedirect(route('home'));
 
     $this->assertAuthenticatedAs($user);
 

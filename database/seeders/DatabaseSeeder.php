@@ -15,11 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
+        // The demo user is also the organiser, so the same login opens the admin dashboard.
+        User::factory()->admin()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
-        $this->call(ConferenceSeeder::class);
+        $this->call([ConferenceSeeder::class, AttendeeSeeder::class]);
     }
 }

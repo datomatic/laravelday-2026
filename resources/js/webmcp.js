@@ -6,9 +6,10 @@ import { postJson } from './live-regions';
  * The API surface moved from navigator.modelContext to document.modelContext during the trial.
  */
 const modelContext = document.modelContext ?? navigator.modelContext;
-const chat = document.getElementById('chat');
+// Only the schedule has talks to add: every stage, the classic page included.
+const talks = document.getElementById('talks');
 
-if (modelContext?.registerTool && chat) {
+if (modelContext?.registerTool && talks) {
     modelContext.registerTool({
         name: 'add_to_agenda',
         description: "Aggiunge un talk all'agenda personale dell'utente loggato. L'id del talk è nell'attributo data-talk-id di ogni talk della pagina.",
@@ -18,7 +19,7 @@ if (modelContext?.registerTool && chat) {
             required: ['talk_id'],
         },
         async execute({ talk_id }) {
-            const message = await postJson(chat.dataset.agendaUrl, { talk_id });
+            const message = await postJson(talks.dataset.agendaUrl, { talk_id });
 
             return { content: [{ type: 'text', text: message }] };
         },

@@ -2,18 +2,25 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Resources\WorkshopsApp;
 use App\Models\Workshop;
 use App\Services\WorkshopBookingService;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
+use Laravel\Mcp\Server\Attributes\RendersApp;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[Name('list_workshops')]
 #[Description('Elenca i workshop della conferenza con orari e posti rimasti.')]
 #[IsReadOnly]
+#[IsOpenWorld(false)]
+#[RendersApp(WorkshopsApp::class)]
 class ListWorkshopsTool extends Tool
 {
     public function handle(WorkshopBookingService $bookings): ResponseFactory
@@ -21,5 +28,15 @@ class ListWorkshopsTool extends Tool
         return Response::structured([
             'workshops' => $bookings->workshops()->map(fn (Workshop $workshop) => $workshop->toSummary())->all(),
         ]);
+    }
+
+    /**
+     * @return array<string, Type>
+     */
+    public function outputSchema(JsonSchema $schema): array
+    {
+        return [
+            'workshops' => $schema->array()->items(Workshop::summarySchema($schema))->required(),
+        ];
     }
 }

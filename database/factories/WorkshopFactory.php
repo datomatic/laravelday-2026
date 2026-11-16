@@ -23,8 +23,8 @@ class WorkshopFactory extends Factory
             'title' => fake()->sentence(4),
             'description' => fake()->paragraph(),
             'capacity' => 20,
-            'starts_at' => '2026-11-26 14:00:00',
-            'ends_at' => '2026-11-26 16:00:00',
+            'starts_at' => '2026-11-19 14:00:00',
+            'ends_at' => '2026-11-19 16:00:00',
         ];
     }
 }

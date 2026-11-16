@@ -1,7 +1,7 @@
 <x-layouts.app>
     <div class="mx-auto mt-12 max-w-sm">
         <div class="mb-6 text-center">
-            <span class="mx-auto grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-red-500 to-red-700 text-xl font-bold text-white shadow-lg shadow-red-600/30">L</span>
+            <img src="{{ asset('images/laravelday-icon.png') }}" alt="" class="mx-auto size-12 rounded-2xl">
             <h1 class="mt-4 text-2xl font-bold tracking-tight">Bentornato</h1>
             <p class="text-sm text-zinc-500">Accedi per costruire la tua agenda.</p>
         </div>
