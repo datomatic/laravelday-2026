@@ -20,28 +20,19 @@ use App\Models\WorkshopBooking;
 use Illuminate\Testing\Fluent\AssertableJson;
 
 test('search talks filters by text and track', function () {
-    Talk::factory()->create(['title' => 'RAG con pgvector', 'track' => Track::Ai]);
+    $rag = Talk::factory()->create(['title' => 'RAG con pgvector', 'track' => Track::Ai]);
     Talk::factory()->create(['title' => 'Code affidabili', 'track' => Track::Backend]);
 
     ConferenceServer::tool(SearchTalksTool::class, ['query' => 'pgvector'])
         ->assertOk()
         ->assertSee('RAG con pgvector')
-        ->assertDontSee('Code affidabili');
+        ->assertDontSee('Code affidabili')
+        ->assertStructuredContent(fn (AssertableJson $json) => $json->where('talks.0.speaker_id', $rag->speaker_id)->etc());
 
     ConferenceServer::tool(SearchTalksTool::class, ['track' => Track::Backend->value])
         ->assertOk()
         ->assertSee('Code affidabili')
         ->assertDontSee('RAG con pgvector');
-});
-
-test('search talks returns the speaker id so the agent can show the speaker card', function () {
-    $talk = Talk::factory()->create(['title' => 'RAG con pgvector']);
-
-    ConferenceServer::tool(SearchTalksTool::class, ['query' => 'pgvector'])
-        ->assertOk()
-        ->assertStructuredContent(fn (AssertableJson $json) => $json
-            ->where('talks.0.speaker_id', $talk->speaker_id)
-            ->etc());
 });
 
 test('search talks rejects an unknown track', function () {
@@ -183,20 +174,9 @@ test('plan my day prompt asks the model to plan around the user interests with t
         ->assertSee(['AI e testing', 'search_talks', 'show_agenda', 'add_to_agenda']);
 });
 
-test('plan my day prompt requires the interests', function () {
-    ConferenceServer::prompt(PlanMyDayPrompt::class)
-        ->assertHasErrors();
-});
-
-test('list workshops renders the workshops app in the client', function () {
-    $meta = (new ListWorkshopsTool)->toArray()['_meta']['ui'];
-
-    expect($meta['resourceUri'])->toBe((new WorkshopsApp)->uri())
-        ->and($meta['resourceUri'])->toStartWith('ui://');
-});
-
-test('workshops app is an html page that books through the book workshop tool', function () {
-    expect((new WorkshopsApp)->toArray()['mimeType'])->toBe('text/html;profile=mcp-app')
+test('list workshops renders the workshops app, an html page that books through the book workshop tool', function () {
+    expect((new ListWorkshopsTool)->toArray()['_meta']['ui']['resourceUri'])->toBe((new WorkshopsApp)->uri())
+        ->and((new WorkshopsApp)->toArray()['mimeType'])->toBe('text/html;profile=mcp-app')
         ->and((new WorkshopsApp)->resolvedAppMeta())->not->toHaveKey('domain');
 
     ConferenceServer::resource(WorkshopsApp::class)

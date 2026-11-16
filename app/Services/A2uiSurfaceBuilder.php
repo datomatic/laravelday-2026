@@ -34,6 +34,10 @@ class A2uiSurfaceBuilder
      */
     public function talkCards(Collection $talks, Collection $agendaTalks): array
     {
+        $talksPerSlot = Talk::whereIn('starts_at', $talks->pluck('starts_at'))
+            ->get(['starts_at'])
+            ->countBy(fn (Talk $talk) => $talk->starts_at->toDateTimeString());
+
         $cards = $talks->map(fn (Talk $talk) => $this->card(
             key: "talk_{$talk->id}",
             title: $talk->title,
@@ -41,7 +45,7 @@ class A2uiSurfaceBuilder
             badge: $talk->track->label(),
             body: "{$talk->speaker->name} — {$talk->abstract}",
             footer: match (true) {
-                $talk->isPlenary() => [],
+                $talksPerSlot[$talk->starts_at->toDateTimeString()] === 1 => [],
                 $agendaTalks->contains('id', $talk->id) => [['id' => "talk_{$talk->id}_in_agenda", 'component' => 'Text', 'variant' => 'caption', 'text' => '✓ Nella tua agenda']],
                 $agendaTalks->contains(fn (Talk $chosen) => $chosen->overlaps($talk)) => [],
                 default => $this->button("talk_{$talk->id}_button", "Aggiungi all'agenda", ['name' => 'add_to_agenda', 'context' => ['talk_id' => $talk->id]]),

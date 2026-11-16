@@ -4,6 +4,7 @@
         <h1>MCP</h1>
         <p class="text-[48px]">L'app diventa uno strumento per Claude, Codex e gli altri client.</p>
     </div>
+    <aside class="notes">La prima porta: MCP. L'agente sta fuori dalla nostra app, nel client dell'utente, e usa la nostra app come uno strumento.</aside>
 </section>
 
 <section>
@@ -56,14 +57,14 @@
     <aside class="notes">MCP è un protocollo tra due parti. Da una parte il client: Claude Desktop, Codex, VS Code, cioè l'applicazione che ha dentro il modello. Dall'altra il server, che per noi è la nostra app Laravel con il pacchetto laravel/mcp. Parlano JSON-RPC su HTTP, e l'utente si autentica con il suo token. [clic] La prima cosa che fa il client è chiedere: cosa sai fare? [clic] Il server risponde con l'elenco dei tool: nome, descrizione e schema dei parametri. Il modello non conosce la nostra app, la scopre da qui. Quindi descrizioni scritte bene contano quanto il codice. [clic] Quando l'utente chiede di aggiungere un talk, il modello sceglie add_to_agenda e il client lo chiama con i parametri. [clic] Il server esegue il nostro codice e restituisce il risultato, che torna al modello. Le primitive sono tre e cambia chi decide di usarle. I tool li sceglie il modello: sono le azioni. Le resource sono dati che il client legge e allega al contesto: noi esponiamo il programma della conferenza. I prompt sono richieste pronte che l'utente sceglie dal menu: noi ne abbiamo uno, plan_my_day, che vediamo nella demo.</aside>
 </section>
 
-<section data-background-color="#1c1b22" class="code-slide">
+<section data-background-color="#ffffff" class="code-slide">
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">routes/ai.php</p>
             <h2>Un server è una rotta</h2>
         </div>
         @verbatim
-        <pre><code class="language-php" data-trim data-line-numbers="1|3-12|14-17"><script type="text/template">
+        <pre class="code-compact"><code class="language-php" data-trim data-line-numbers="1|3-12|14-17"><script type="text/template">
 Mcp::web('/mcp/conference', ConferenceServer::class)->middleware(['auth:sanctum', 'throttle:60,1']);
 
 class ConferenceServer extends Server
@@ -84,10 +85,10 @@ class ConferenceServer extends Server
 </script></code></pre>
         @endverbatim
     </div>
-    <aside class="notes">Una riga in routes/ai.php, con i middleware che già conosciamo: l'autenticazione con Sanctum e il throttle, perché un agente può chiamare un tool cento volte di fila. Il server elenca tool, resource e prompt. Noi abbiamo sei tool, ma un client collegato a dieci server ne vede centinaia, e ogni definizione occupa contesto. Alcuni client, come Claude Code, ormai li cercano invece di caricarli tutti. Si può fare anche dal server: ci torniamo dopo le annotazioni.</aside>
+    <aside class="notes">Una riga in routes/ai.php, con i middleware che già conosciamo: l'autenticazione con Sanctum e il throttle, perché un agente può chiamare un tool cento volte di fila. [clic] Il server è una classe che elenca le sue primitive: prima i tool, le azioni. [clic] Poi le resource, dati che l'utente allega alla conversazione, come il programma della conferenza, e i prompt, richieste pronte che l'utente sceglie dal menu. Li vediamo all'opera nella demo. Noi abbiamo sei tool, ma un client collegato a dieci server ne vede centinaia, e ogni definizione occupa contesto. Alcuni client, come Claude Code, ormai li cercano invece di caricarli tutti. Si può fare anche dal server: ci torniamo dopo le annotazioni.</aside>
 </section>
 
-<section data-background-color="#1c1b22" class="code-slide">
+<section data-background-color="#ffffff" class="code-slide">
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">app/Mcp/Tools/AddToAgendaTool.php</p>
@@ -147,7 +148,7 @@ class AddToAgendaTool extends Tool
     <aside class="notes">Un tool non restituisce solo testo. Il più comune è Response::text: una stringa che il modello legge. json e view sono scorciatoie che producono sempre testo. Response::structured restituisce dati veri e propri, con la forma dichiarata in outputSchema. Il client li può usare come dati, e laravel/mcp mette anche una copia in testo, così il modello li legge comunque. È quello che fanno i nostri tool di lettura. Response::error segna la risposta come errore: non è un'eccezione che rompe la chiamata, è un risultato che il modello legge, e può riprovare o chiedere all'utente. Lo usiamo per il workshop al completo. Anche gli errori di validazione arrivano al modello così, da soli. Poi immagini e audio, con il loro MIME type, anche presi direttamente da un disco di Storage. resourceLink restituisce un riferimento a una resource invece del contenuto: utile quando il contenuto è grande e il client decide se leggerlo. E con make si mettono più contenuti nella stessa risposta, per esempio un testo e un'immagine. Infine lo streaming: se handle è un generatore, ogni yield di Response::notification parte subito verso il client, per esempio una notifica di progresso su un'operazione lunga. Attenzione però: il risultato vero arriva tutto alla fine, non a pezzi. Per lo streaming del testo del modello, quello parola per parola, serve un altro protocollo: AG-UI, che vediamo tra poco.</aside>
 </section>
 
-<section data-background-color="#1c1b22" class="code-slide">
+<section data-background-color="#ffffff" class="code-slide">
     <div class="flex h-full flex-col justify-center gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">Streaming</p>
@@ -171,7 +172,7 @@ public function handle(Request $request, AgendaService $agenda): Generator
 </script></code></pre>
         @endverbatim
     </div>
-    <aside class="notes">Un esempio che nella demo non c'è: esportare l'agenda in un calendario, un talk alla volta. [clic] handle restituisce un Generator invece di una Response. [clic] A ogni giro facciamo yield di una notifica di progresso: laravel/mcp apre uno stream SSE e la manda subito al client, che può mostrare "3 di 8". [clic] Le Response normali invece vengono raccolte e il client le riceve tutte insieme alla fine, come risultato del tool. Quindi in streaming va l'avanzamento, non il risultato.</aside>
+    <aside class="notes">Un esempio che nella demo non c'è: esportare l'agenda in un calendario, un talk alla volta. handle restituisce un Generator invece di una Response. [clic] A ogni giro facciamo yield di una notifica di progresso: laravel/mcp apre uno stream SSE e la manda subito al client, che può mostrare "3 di 8". [clic] Le Response normali invece vengono raccolte e il client le riceve tutte insieme alla fine, come risultato del tool. Quindi in streaming va l'avanzamento, non il risultato.</aside>
 </section>
 
 <section>
@@ -202,39 +203,15 @@ public function handle(Request $request, AgendaService $agenda): Generator
                 <p class="muted font-mono text-[24px]">openWorldHint · default true</p>
             </div>
         </div>
-        <p class="muted text-[32px]">Sono suggerimenti, non garanzie. Senza annotazioni il client assume il caso peggiore.</p>
-    </div>
-    <aside class="notes">Prima di vedere le nostre, ecco cosa prevede MCP. Le annotazioni sono quattro e in laravel/mcp sono attributi PHP sulla classe del tool. IsReadOnly: il tool legge e non cambia niente. IsDestructive: può cancellare o sovrascrivere dati. IsIdempotent: se lo chiami due volte con gli stessi argomenti, la seconda chiamata non cambia nulla. IsOpenWorld: il tool parla con il mondo esterno, per esempio il web o un'API di terzi, invece di restare dentro l'app. Guardate i default: se non dite niente, il client deve pensare al caso peggiore, cioè un tool che scrive, può distruggere ed esce dall'app. Distruttivo e idempotente contano solo se il tool non è in sola lettura. E sono suggerimenti, non garanzie: il client li usa per decidere quando chiedere conferma, ma la sicurezza vera resta sul server, con policy e validazione.</aside>
-</section>
-
-<section>
-    <div class="flex h-full flex-col justify-center gap-12">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">Annotazioni</p>
-            <h2>Dichiariamo anche cosa non fanno</h2>
+        <div class="flex flex-col gap-3 text-[32px]">
+            <p class="muted">Sono suggerimenti, non garanzie. Senza annotazioni il client assume il caso peggiore.</p>
+            <p>Quindi dichiariamo anche cosa un tool <b>non</b> fa: <code>add_to_agenda</code> è <code>#[IsDestructive(false)]</code>, e nessuno dei nostri esce dall'app.</p>
         </div>
-        <table class="w-full text-left text-[32px]">
-            <thead class="font-mono text-[26px] text-zinc-500">
-                <tr>
-                    <th class="pb-4">Tool</th>
-                    <th class="pb-4">Annotazioni</th>
-                </tr>
-            </thead>
-            <tbody class="font-mono">
-                <tr class="border-t-2 border-zinc-200"><td class="py-4">search_talks</td><td>#[IsReadOnly]</td></tr>
-                <tr class="border-t-2 border-zinc-200"><td class="py-4">show_agenda</td><td>#[IsReadOnly]</td></tr>
-                <tr class="border-t-2 border-zinc-200"><td class="py-4">list_workshops</td><td>#[IsReadOnly]</td></tr>
-                <tr class="border-t-2 border-zinc-200"><td class="py-4">add_to_agenda</td><td>#[IsDestructive(false)] #[IsIdempotent]</td></tr>
-                <tr class="border-t-2 border-zinc-200"><td class="py-4">book_workshop</td><td>#[IsDestructive(false)] #[IsIdempotent]</td></tr>
-                <tr class="border-t-2 border-zinc-200"><td class="py-4">clear_agenda</td><td><span class="text-red-600">#[IsDestructive]</span> #[IsIdempotent]</td></tr>
-            </tbody>
-        </table>
-        <p class="muted text-[32px]">Tutti con <code>#[IsOpenWorld(false)]</code>: nessuno esce dall'app.</p>
     </div>
-    <aside class="notes">Ecco le nostre. I tre tool di lettura sono IsReadOnly, e questo basta: distruttivo e idempotente non contano per chi legge. add_to_agenda scrive, quindi senza dire niente il client lo considererebbe distruttivo. Gli diciamo esplicitamente IsDestructive false, e che è idempotente: aggiungere due volte lo stesso talk non cambia niente. Lo stesso vale per book_workshop: il service restituisce la prenotazione esistente invece di crearne un'altra. clear_agenda è l'unico distruttivo, ed è qui che il client dovrebbe chiedere conferma. Svuotarla due volte non cambia altro, quindi è anche idempotente. Infine tutti sono IsOpenWorld false: lavorano solo sui dati della nostra app. Il messaggio è: i default sono prudenti, quindi dichiarate anche quello che il tool non fa.</aside>
+    <aside class="notes">Prima di vedere le nostre, ecco cosa prevede MCP. Le annotazioni sono quattro e in laravel/mcp sono attributi PHP sulla classe del tool. IsReadOnly: il tool legge e non cambia niente. IsDestructive: può cancellare o sovrascrivere dati. IsIdempotent: se lo chiami due volte con gli stessi argomenti, la seconda chiamata non cambia nulla. IsOpenWorld: il tool parla con il mondo esterno, per esempio il web o un'API di terzi, invece di restare dentro l'app. Guardate i default: se non dite niente, il client deve pensare al caso peggiore, cioè un tool che scrive, può distruggere ed esce dall'app. Distruttivo e idempotente contano solo se il tool non è in sola lettura. E sono suggerimenti, non garanzie: il client li usa per decidere quando chiedere conferma, ma la sicurezza vera resta sul server, con policy e validazione. Proprio perché i default sono prudenti, conviene dichiarare anche quello che un tool non fa. add_to_agenda scrive, quindi senza dire niente il client lo considererebbe distruttivo: gli diciamo IsDestructive false. E tutti i nostri tool sono IsOpenWorld false, perché lavorano solo sui dati della nostra app. L'unico distruttivo è clear_agenda, ed è lì che il client dovrebbe chiedere conferma.</aside>
 </section>
 
-<section data-background-color="#1c1b22" class="code-slide">
+<section data-background-color="#ffffff" class="code-slide">
     <div class="flex h-full flex-col justify-center gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">Laravel\Mcp\Server\Tools\ToolSearch</p>
@@ -261,104 +238,11 @@ protected array $tools = [
             <div class="flex flex-col gap-8 text-[32px]">
                 <p class="fragment">Il client vede solo <code>search_tools</code> ed <code>execute_tools</code>.</p>
                 <p class="fragment">La ricerca pesa nome, descrizione e schema.</p>
-                <p class="fragment text-red-400">Le annotazioni dei tool nel catalogo non arrivano al client.</p>
+                <p class="fragment font-semibold text-red-700">Le annotazioni dei tool nel catalogo non arrivano al client.</p>
             </div>
         </div>
     </div>
     <aside class="notes">Torniamo al problema dei tanti tool: laravel/mcp ha una soluzione lato server. Nell'array dei tool lasciamo fuori quelli che servono sempre. [clic] Gli altri li mettiamo sotto la chiave ToolSearch. [clic] Il client non vede più quei tool: vede due tool generici, search_tools per cercare nel catalogo ed execute_tools per chiamarli. Il modello cerca, riceve nome, descrizione e schema dei tool trovati, poi li esegue. [clic] La ricerca è per parole: il nome conta di più, poi la descrizione, poi lo schema. Ancora una volta, nome e descrizione sono quello che il modello vede. [clic] Il prezzo: per il client esiste solo execute_tools, quindi le annotazioni dei singoli tool non le vede. Se nel catalogo c'è clear_agenda, il client non sa che è distruttivo. Nella demo non lo usiamo, abbiamo solo sei tool. Ha senso quando sono decine, e i tool rischiosi è meglio lasciarli fuori dal catalogo.</aside>
-</section>
-
-<section data-background-color="#1c1b22" class="code-slide">
-    <div class="flex h-full flex-col justify-center gap-10">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">MCP Apps</p>
-            <h2>Un tool può avere un'interfaccia</h2>
-        </div>
-        @verbatim
-        <pre><code class="language-php" data-trim data-line-numbers="1-3|5-12|14-18"><script type="text/template">
-// app/Mcp/Tools/ListWorkshopsTool.php
-#[RendersApp(WorkshopsApp::class)]
-class ListWorkshopsTool extends Tool { … }
-
-// app/Mcp/Resources/WorkshopsApp.php
-class WorkshopsApp extends AppResource
-{
-    public function handle(Request $request): Response
-    {
-        return Response::view('mcp.workshops-app', ['roles' => CompanyRole::cases()]);
-    }
-}
-
-// resources/views/mcp/workshops-app.blade.php
-createMcpApp(async (app) => {
-    app.onToolResult((result) => render(result.structuredContent.workshops));
-    form.onsubmit = () => app.callServerTool('book_workshop', fields(form));
-});
-</script></code></pre>
-        @endverbatim
-    </div>
-    <aside class="notes">Di solito è il client a decidere come mostrare i risultati di un tool. Le MCP Apps sono un'estensione ufficiale del protocollo che cambia questo: un tool può portarsi dietro un pezzo di interfaccia HTML, che il client mostra dentro la chat. [clic] Basta un attributo sul tool: RendersApp. Quando il tool compare nell'elenco, il client sa che ha un'interfaccia collegata, con un URI ui://. [clic] L'interfaccia è una classe a parte, una AppResource, con MIME type text/html: è un tipo speciale di resource, la primitiva che vediamo tra poco. Restituisce una vista Blade, e possiamo passarle dati dal server, qui i ruoli per il form. [clic] Nella vista, createMcpApp collega la pagina al client. Il client le passa il risultato del tool, e noi disegniamo le card dei workshop. E la pagina può chiamare altri tool: il bottone Prenota chiama book_workshop. Il client la mostra in un iframe isolato: niente cookie della nostra app, niente richieste esterne se non le dichiariamo. È lo stesso form di prenotazione che vedremo con A2UI, ma qui l'HTML lo scriviamo noi e lo mostra il client di qualcun altro. Lo vediamo nella demo. Un dettaglio pratico: con mcp-remote in Claude Desktop va tolto il dominio dedicato, con AppMeta domain false, altrimenti l'app non si vede.</aside>
-</section>
-
-<section data-background-color="#1c1b22" class="code-slide">
-    <div class="flex h-full flex-col justify-center gap-10">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">app/Mcp/Resources/ScheduleResource.php</p>
-            <h2>Una resource è un dato da leggere</h2>
-        </div>
-        @verbatim
-        <pre><code class="language-php" data-trim data-line-numbers="1-3|6-12"><script type="text/template">
-#[Uri('conference://schedule')]
-#[MimeType('application/json')]
-#[Description('Il programma completo della conferenza: talk, speaker, sale e orari.')]
-class ScheduleResource extends Resource
-{
-    public function handle(AgendaService $agenda): Response
-    {
-        return Response::json(
-            $agenda->searchTalks()
-                ->map(fn (Talk $talk) => $talk->toSummary())
-                ->all()
-        );
-    }
-}
-</script></code></pre>
-        @endverbatim
-    </div>
-    <aside class="notes">Oltre ai tool c'è la seconda primitiva: le resource. È una classe come i tool, e handle può ricevere i service con la dependency injection. Una resource ha un URI, un MIME type e una descrizione. La nostra è il programma della conferenza, conference://schedule. [clic] handle restituisce il contenuto: qui il JSON di tutti i talk, preso dallo stesso AgendaService. Il client le scopre con resources/list e le legge con resources/read. La differenza con i tool è chi decide. Un tool lo sceglie il modello durante la conversazione. Una resource invece la allega l'utente, dal menu del client, come un file. Funziona così: il client chiede l'elenco con resources/list e lo mostra nella sua interfaccia. In Claude Desktop è il pulsante più nella casella del messaggio, in Claude Code si scrive chiocciola e compare nell'autocompletamento. L'utente sceglie, il client chiama resources/read e mette il contenuto nella conversazione prima che il modello risponda. Il modello non sa nemmeno che c'era una resource: si ritrova il programma nel contesto. Con i template, tipo conference://talks/{id}, l'utente deve anche dare il parametro, e il server può suggerire i valori mentre scrive. A rigore la specifica dice che è il client a decidere: può farle scegliere all'utente o allegarle da solo. Oggi quasi tutti le fanno scegliere all'utente. Ed è solo lettura: il modello non le passa parametri e leggerla non cambia niente. Nella demo non usiamo template.</aside>
-</section>
-
-<section data-background-color="#1c1b22" class="code-slide">
-    <div class="flex h-full flex-col justify-center gap-10">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">app/Mcp/Prompts/PlanMyDayPrompt.php</p>
-            <h2>Un prompt è una richiesta pronta</h2>
-        </div>
-        @verbatim
-        <pre><code class="language-php" data-trim data-line-numbers="1-2|5-14|15-18"><script type="text/template">
-#[Name('plan_my_day')]
-#[Title('Pianifica la mia giornata')]
-class PlanMyDayPrompt extends Prompt
-{
-    public function handle(Request $request): Response
-    {
-        $validated = $request->validate(['interests' => ['required', 'string', 'max:200']]);
-        return Response::text(<<<PROMPT
-            I miei interessi sono: {$validated['interests']}.
-            1. Guarda la mia agenda con show_agenda e il programma con search_talks.
-            2. Per ogni fascia oraria scegli un talk, mostrami la proposta in una tabella.
-            3. Aggiungi i talk con add_to_agenda solo dopo che ho confermato.
-            PROMPT);
-    }
-    public function arguments(): array
-    {
-        return [new Argument('interests', 'Gli argomenti che interessano', required: true)];
-    }
-}
-</script></code></pre>
-        @endverbatim
-    </div>
-    <aside class="notes">La terza primitiva: i prompt. Se i tool li sceglie il modello e le resource il client, i prompt li sceglie l'utente. [clic] Un prompt ha un nome e un titolo: il titolo è quello che l'utente vede nel menu. [clic] handle riceve gli argomenti, li valida come in un tool, e restituisce del testo: è il messaggio che finirà nella conversazione, come se l'avesse scritto l'utente. Dice al modello quali tool usare e in che ordine, e soprattutto di chiamare add_to_agenda solo dopo la conferma. [clic] arguments dichiara cosa chiedere all'utente: il client mostra un campo per ogni argomento. In Claude Desktop si sceglie dal menu più, in Claude Code diventa uno slash command: /mcp__conference__plan_my_day. Il prompt non esegue niente: restituisce messaggi, e poi è il modello a decidere quali tool chiamare. E non c'è logica nuova: il prompt spiega al modello come usare i tool che abbiamo già. È un modo per dare all'utente una scorciatoia pronta per il caso d'uso più comune. Lo vediamo nella demo.</aside>
 </section>
 
 <section>
@@ -367,14 +251,20 @@ class PlanMyDayPrompt extends Prompt
             <p class="eyebrow">Autenticazione</p>
             <h2>Ogni chiamata ha un utente</h2>
         </div>
-        <ul class="flex flex-col gap-8 text-[40px]">
-            <li>Token personale <b>Sanctum</b> nell'header <code>Authorization: Bearer …</code></li>
-            <li class="fragment"><code>$request->user()</code> nel tool: il client agisce per conto di una persona precisa</li>
-            <li class="fragment">Oppure OAuth con <b>Passport</b>: l'utente fa login dal browser, niente token da copiare<br><span class="muted text-[32px]"><code>Mcp::oauthRoutes()</code> e middleware <code>auth:api</code></span></li>
-            <li class="fragment"><code>shouldRegister()</code>: ogni utente vede solo i tool che può usare<br><span class="muted text-[32px]">se restituisce <code>false</code>, il tool non compare in <code>tools/list</code> e non si può chiamare</span></li>
-        </ul>
+        <div class="flex flex-1 items-center gap-16">
+            <ul class="flex flex-1 flex-col gap-8 text-[36px]">
+                <li>Token personale <b>Sanctum</b> nell'header <code>Authorization: Bearer …</code><br><span class="muted text-[32px]">middleware <code>auth:sanctum</code></span></li>
+                <li class="fragment" data-fragment-index="0">Oppure OAuth con <b>Passport</b>: l'utente fa login dal browser, niente token da copiare<br><span class="muted text-[32px]">middleware <code>auth:api</code></span></li>
+                <li class="fragment" data-fragment-index="1"><code>$request->user()</code> nel tool: il client agisce per conto di una persona precisa</li>
+                <li class="fragment" data-fragment-index="2"><code>shouldRegister()</code>: ogni utente vede solo i tool che può usare<br><span class="muted text-[32px]">se restituisce <code>false</code>, il tool non compare in <code>tools/list</code> e non si può chiamare</span></li>
+            </ul>
+            <figure class="fragment flex w-[560px] shrink-0 flex-col items-center gap-4" data-fragment-index="0">
+                <img src="{{ asset('images/slides/passport-authorize.png') }}" alt="Schermata di autorizzazione OAuth di laravel/mcp: Authorize, Cancel, utente collegato e permesso Use MCP" class="w-full">
+                <figcaption class="muted text-center text-[24px]">La schermata di laravel/mcp: l'utente approva il client</figcaption>
+            </figure>
+        </div>
     </div>
-    <aside class="notes">Policy, gate e scope funzionano come sempre, perché l'utente è quello del token. [clic] Nella demo uso un token Sanctum perché è il modo più semplice: lo genero e lo incollo nella configurazione del client. Ma la specifica MCP prevede OAuth 2.1, ed è quello che la maggior parte dei client supporta meglio. Con Passport, laravel/mcp registra le rotte di discovery e di registrazione del client con Mcp::oauthRoutes, e il server si protegge con auth:api. Il client apre il browser, l'utente fa login nella nostra app e approva l'accesso, e il token arriva al client da solo. Ed è quello che serve per aggiungerla come connettore remoto nei client che lo supportano. La documentazione di laravel/mcp consiglia Passport quando possibile, e Sanctum se l'app lo usa già. [clic] E visto che sappiamo chi è l'utente, possiamo decidere anche cosa vede. Ogni tool può avere un metodo shouldRegister che riceve la richiesta: se restituisce false, il tool sparisce dall'elenco e non si può chiamare. Per esempio un tool di amministrazione che vedono solo gli admin, o una funzione riservata a chi ha un abbonamento. Il modello non vede nemmeno che esiste, quindi non spreca contesto e non prova a usarlo.</aside>
+    <aside class="notes">Prima scelta: come si autentica il client. Nella demo uso un token Sanctum perché è il modo più semplice: lo genero e lo incollo nella configurazione del client, che lo manda nell'header Authorization. [clic] Ma la specifica MCP prevede OAuth 2.1, ed è quello che la maggior parte dei client supporta meglio. Con Passport, laravel/mcp registra da solo le rotte che servono a OAuth, e sulla rotta del server il middleware diventa auth:api invece di auth:sanctum. Il client apre il browser, l'utente fa login nella nostra app e approva l'accesso da questa schermata, che laravel/mcp ci dà già pronta, e il token arriva al client da solo. Ed è quello che serve per aggiungerla come connettore remoto nei client che lo supportano. La documentazione di laravel/mcp consiglia Passport quando possibile, e Sanctum se l'app lo usa già. [clic] Qualunque sia la scelta, nel tool l'utente arriva da $request->user(), come in un controller: il client agisce per conto di una persona precisa. Policy, gate e scope funzionano come sempre. [clic] E visto che sappiamo chi è l'utente, possiamo decidere anche cosa vede. Ogni tool può avere un metodo shouldRegister che riceve la richiesta: se restituisce false, il tool sparisce dall'elenco e non si può chiamare. Per esempio un tool di amministrazione che vedono solo gli admin, o una funzione riservata a chi ha un abbonamento. Il modello non vede nemmeno che esiste, quindi non spreca contesto e non prova a usarlo.</aside>
 </section>
 
 <section data-background-color="#18181b" class="demo">
@@ -384,7 +274,7 @@ class PlanMyDayPrompt extends Prompt
         <p class="text-[40px] text-zinc-300">«Trova i talk sull'AI e mettili nella mia agenda»</p>
         <p class="text-[32px]"><a href="{{ App\Enums\DemoStage::Classic->url() }}">Apri il programma →</a></p>
     </div>
-    <aside class="notes">Claude Desktop collegato con il token. Poi ricaricare la pagina classica: il talk è in agenda. Poi il prompt: dal menu più scegliere Pianifica la mia giornata, scrivere «AI e testing» come interessi. Il messaggio pronto arriva nella chat, il modello usa show_agenda e search_talks, propone la tabella e aspetta la conferma prima di chiamare add_to_agenda. Il prompt non ha logica sua: orchestra i tool che esistono già. Infine l'app: chiedere «quali workshop ci sono?». Sotto la risposta compaiono le card; compilare ruolo e azienda e cliccare Prenota. I posti scendono di uno, e ricaricando il programma la prenotazione c'è.</aside>
+    <aside class="notes">Claude Desktop è già collegato con il token. Chiedere «aggiungi alla mia agenda il talk su RAG»: si vedono search_talks e add_to_agenda. Poi ricaricare la pagina classica: il talk è in agenda. Poi il prompt: dal menu più scegliere Pianifica la mia giornata, scrivere «AI e testing» come interessi. Il messaggio pronto arriva nella chat, il modello usa show_agenda e search_talks, propone la tabella e aspetta la conferma prima di chiamare add_to_agenda. Il prompt non ha logica sua: orchestra i tool che esistono già.</aside>
 </section>
 
 <section>
@@ -412,7 +302,7 @@ class PlanMyDayPrompt extends Prompt
             </div>
         </div>
     </div>
-    <aside class="notes">Cosa ci portiamo a casa da MCP. [clic] Il primo vantaggio è economico: l'agente lo paga chi lo usa. Il modello, i token, l'abbonamento sono del client, non nostri. Noi esponiamo solo la logica. [clic] Non dobbiamo sviluppare nessuna interfaccia: la chat, la conferma, la cronologia le ha già il client. [clic] Scriviamo un server solo, che funziona con tutti i client compatibili, anche con quelli che usciranno domani. [clic] Il rovescio: è ancora una cosa di nicchia. Per usarla serve un client MCP configurato, e oggi lo fanno soprattutto gli sviluppatori, non i nostri utenti finali. [clic] L'esperienza non è nostra: quale modello, quale prompt, come vengono mostrati i risultati lo decide il client. E non tutti i client supportano le stesse cose: i tool funzionano ovunque, ma resource, prompt e annotazioni ognuno li tratta a modo suo. [clic] E vediamo poco: nei log abbiamo le chiamate ai tool, ma non sappiamo cosa ha chiesto l'utente né cosa gli ha risposto il modello. Se vogliamo l'agente dentro la nostra app, per i nostri utenti, con la nostra interfaccia e sotto il nostro controllo, serve altro: ed è qui che arriva AG-UI.</aside>
+    <aside class="notes">Cosa ci portiamo a casa da MCP. [clic] Il primo vantaggio è economico: l'agente lo paga chi lo usa. Il modello, i token, l'abbonamento sono del client, non nostri. Noi esponiamo solo la logica. [clic] Non dobbiamo sviluppare nessuna interfaccia: la chat, la conferma, la cronologia le ha già il client. [clic] Scriviamo un server solo, che funziona con tutti i client compatibili, anche con quelli che usciranno domani. [clic] Il rovescio: è ancora una cosa di nicchia. Per usarla serve un client MCP configurato, e oggi lo fanno soprattutto gli sviluppatori, non i nostri utenti finali. [clic] L'esperienza non è nostra: quale modello, quale prompt, come vengono mostrati i risultati lo decide il client. E non tutti i client supportano le stesse cose: i tool funzionano ovunque, ma resource, prompt e annotazioni ognuno li tratta a modo suo. [clic] E vediamo poco: nei log abbiamo le chiamate ai tool, ma non sappiamo cosa ha chiesto l'utente né cosa gli ha risposto il modello. Se vogliamo l'agente dentro la nostra app, per i nostri utenti, con la nostra interfaccia e sotto il nostro controllo, serve altro. Ci arriviamo tra poco, prima due esempi veri.</aside>
 </section>
 
 <section>

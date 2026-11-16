@@ -9,29 +9,20 @@ test('guests can open the slides', function () {
         ->assertSeeInOrder(['MCP', 'AG-UI', 'A2UI', 'WebMCP']);
 });
 
-test('the demo slides link every chat stage in order', function () {
-    $this->get(route('slides'))
-        ->assertOk()
-        ->assertSeeInOrder([
-            route('schedule', DemoStage::Classic),
-            route('schedule', DemoStage::HomemadeChat),
-            route('schedule', DemoStage::TextChat),
-            route('schedule', DemoStage::Generative),
-        ]);
-});
-
 test('code samples are rendered verbatim', function () {
     $this->get(route('slides'))
         ->assertOk()
         ->assertSee("Mcp::web('/mcp/conference', ConferenceServer::class)", false)
-        ->assertSee('"{$key}_content"', false);
+        ->assertSee('Response::text("\\"{$talk->title}\\" aggiunto all\'agenda.");', false);
 });
 
-test('the demo links open in the same window', function () {
-    $html = $this->get(route('slides'))->assertOk()->getContent();
+test('the demo slides link every stage in order, in the same window', function () {
+    $links = collect(DemoStage::cases())->map(fn (DemoStage $stage) => 'href="'.$stage->url().'"');
 
-    foreach (DemoStage::cases() as $stage) {
-        expect($html)->toContain('href="'.$stage->url().'"')
-            ->not->toContain('href="'.$stage->url().'" target="_blank"');
-    }
+    $html = $this->get(route('slides'))
+        ->assertOk()
+        ->assertSeeInOrder($links->all(), false)
+        ->getContent();
+
+    $links->each(fn (string $link) => expect($html)->not->toContain($link.' target="_blank"'));
 });

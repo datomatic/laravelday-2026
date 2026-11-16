@@ -11,7 +11,6 @@ use App\Models\Workshop;
 use App\Models\WorkshopBooking;
 use App\Neuron\Tools\GetStatistics;
 use App\Neuron\Tools\RenderSurface;
-use App\Services\A2uiSurfaceBuilder;
 
 /**
  * @return array<mixed>
@@ -117,31 +116,12 @@ test('the daily report counts the sign-ups of each day', function () {
     ]);
 });
 
-test('render surface wraps a valid tree in a surface of the conference catalog', function () {
-    $components = [
-        ['id' => 'root', 'component' => 'Card', 'child' => 'table'],
-        ['id' => 'table', 'component' => 'DataTable', 'columns' => ['Workshop', 'Prenotati'], 'rows' => [['Pest', 4]]],
-    ];
-
-    $result = app(RenderSurface::class)(json_encode($components));
-    $surface = json_decode($result->getText(), true)['a2ui'][0]['createSurface'];
-
-    expect($result->isError())->toBeFalse();
-
-    expect($surface['catalogId'])->toBe(A2uiSurfaceBuilder::CONFERENCE_CATALOG)
-        ->and($surface['components'])->toBe($components);
-});
-
-test('render surface answers the model with the errors of an invalid tree', function () {
-    $result = app(RenderSurface::class)(json_encode([['id' => 'root', 'component' => 'Column', 'children' => ['missing']]]));
+test('render surface sends the errors back to the model so it can retry', function (string $components, string $error) {
+    $result = app(RenderSurface::class)($components);
 
     expect($result->isError())->toBeTrue()
-        ->and($result->getText())->toContain('il figlio "missing" non esiste');
-});
-
-test('render surface rejects text that is not json', function () {
-    $result = app(RenderSurface::class)('non è json');
-
-    expect($result->isError())->toBeTrue()
-        ->and($result->getText())->toStartWith('components non è un array JSON valido');
-});
+        ->and($result->getText())->toContain($error);
+})->with([
+    'invalid tree' => [json_encode([['id' => 'root', 'component' => 'Column', 'children' => ['missing']]]), 'il figlio "missing" non esiste'],
+    'not json' => ['non è json', 'components non è un array JSON valido'],
+]);

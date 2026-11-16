@@ -4,44 +4,87 @@
         <h1>A2UI</h1>
         <p class="text-[48px]">L'agente compone l'interfaccia, l'app decide come mostrarla.</p>
     </div>
+    <aside class="notes">La terza porta: A2UI. Finora l'agente risponde con del testo: ora gli facciamo comporre l'interfaccia.</aside>
 </section>
 
 <section>
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
-            <p class="eyebrow">Interfaccia dichiarativa</p>
-            <h2>JSON dal server, componenti nel browser</h2>
+            <p class="eyebrow">Cos'è A2UI · Agent to User Interface</p>
+            <h2>L'agente sceglie dal catalogo, l'app disegna</h2>
         </div>
-        <ol class="flex flex-col gap-6 text-[36px]">
-            <li class="fragment">Il modello chiama <code>show_talk_cards</code> con gli id trovati</li>
-            <li class="fragment">PHP costruisce i messaggi A2UI: <code>A2uiSurfaceBuilder</code></li>
-            <li class="fragment">Viaggiano nell'evento AG-UI <code>TOOL_CALL_RESULT</code></li>
-            <li class="fragment"><code>&lt;a2ui-surface&gt;</code> li disegna con il catalogo dell'app</li>
-            <li class="fragment">Un clic su «Aggiungi» chiama <code>POST /agenda</code>, senza ripassare dal modello</li>
-        </ol>
+        <div class="flex flex-col gap-8">
+            <p class="max-w-[1650px] text-[36px]">Un protocollo aperto, nato in Google. L'app dichiara un <b>catalogo di componenti</b>; l'agente risponde con un <b>JSON</b> che sceglie i componenti da quel catalogo e li riempie di dati. Il client li disegna con i suoi componenti e il suo stile.</p>
+            <p class="muted text-[26px]">Il nostro catalogo: <b>base di A2UI</b> e <b class="text-red-700">aggiunti da noi</b></p>
+            <div class="-mt-4 flex flex-wrap items-center gap-4 font-mono text-[26px]">
+                @foreach (['Card', 'Column', 'Row', 'Text', 'Image', 'Button', 'TextField', 'Modal', 'Tabs'] as $component)
+                    <span class="rounded-xl border-2 border-zinc-300 bg-white px-4 py-1">{{ $component }}</span>
+                @endforeach
+                @foreach (['Chart', 'Stat', 'DataTable'] as $component)
+                    <span class="rounded-xl border-2 border-red-600 bg-red-100 px-4 py-1 text-red-700">{{ $component }}</span>
+                @endforeach
+            </div>
+            <p class="muted text-[26px]">Tutti i componenti di base: <a href="https://a2ui.org/specification/v1.0-basic-catalog-implementation-guide/" target="_blank" class="font-mono text-red-700 underline">a2ui.org</a></p>
+        </div>
+        <div class="grid grid-cols-2 gap-10">
+            <div class="card fragment flex flex-col gap-4">
+                <p class="font-mono text-[26px] text-red-600">AG-UI</p>
+                <h3>È il canale</h3>
+                <p class="muted text-[28px]">Porta gli eventi della chat: testo, tool, conferme. Non dice niente sull'aspetto.</p>
+            </div>
+            <div class="card fragment flex flex-col gap-4 border-red-600!">
+                <p class="font-mono text-[26px] text-red-600">A2UI</p>
+                <h3>Mostra i dati con i tuoi componenti</h3>
+                <p class="muted text-[28px]">Solo componenti del catalogo e dati, nessun codice da eseguire. Viaggia dentro AG-UI.</p>
+            </div>
+        </div>
     </div>
-    <aside class="notes">[clic] Nella chat generativa il modello ha dei tool in più, come show_talk_cards, e lo chiama con gli id che ha trovato con search_talks. [clic] Il tool non restituisce testo: A2uiSurfaceBuilder costruisce in PHP i messaggi A2UI, cioè l'elenco dei componenti con i dati dentro. [clic] Arrivano al browser dentro l'evento AG-UI TOOL_CALL_RESULT: A2UI non ha bisogno di un altro canale. [clic] Il renderer Lit di A2UI, l'elemento a2ui-surface, li disegna con i componenti del catalogo e con il nostro stile. [clic] I bottoni non ripassano dal modello: il clic su Aggiungi chiama la stessa rotta POST /agenda del pulsante della pagina classica. Qui il modello sceglie quale scheda mostrare, ma il layout l'abbiamo scritto noi. Tra poco vediamo cosa succede quando lo scrive il modello.</aside>
+    <aside class="notes">Che cos'è A2UI. Sta per Agent to User Interface: è un protocollo aperto, nato in Google, per far mostrare all'agente delle interfacce invece del solo testo. Il punto chiave è il catalogo. L'app dichiara quali componenti sa disegnare: card, colonne, righe, testi, immagini, bottoni, campi di form, modali, tab. Questi grigi sono il catalogo base di A2UI; i tre rossi, Chart, Stat e DataTable, li abbiamo aggiunti noi. L'agente non scrive HTML: risponde con un JSON che sceglie componenti da quel catalogo e li riempie di dati, per esempio una card con dentro un titolo e un bottone. Poi è l'app che li disegna, con i suoi componenti e il suo stile: sul web con Lit, come facciamo noi, ma lo stesso JSON può diventare un'interfaccia Flutter o Angular. E AG-UI, che abbiamo appena visto? [clic] Non è un'alternativa: è il canale. Porta gli eventi della chat, il testo, le chiamate ai tool, le conferme, ma non dice niente su come appare l'interfaccia. [clic] A2UI è il pezzo che mancava: mostra i dati con i componenti della nostra app. Manda solo dati, componenti del catalogo riempiti con i nostri valori. Non c'è codice da eseguire, quindi è sicuro anche quando il JSON lo scrive un modello, e l'interfaccia sembra nativa. E viaggia dentro AG-UI, nel risultato di un tool. Vediamo come lo usiamo nella nostra chat.</aside>
 </section>
 
-<section data-background-color="#1c1b22" class="code-slide">
+<section data-background-color="#ffffff" class="code-slide">
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
-            <p class="eyebrow">app/Services/A2uiSurfaceBuilder.php</p>
-            <h2>Una scheda è un albero piatto</h2>
+            <p class="eyebrow">A2UI nella nostra chat</p>
+            <h2>Il tool restituisce componenti, non testo</h2>
         </div>
-        @verbatim
-        <pre><code class="language-php" data-trim data-line-numbers="1|2|3|4|5-6"><script type="text/template">
-['id' => $key, 'component' => 'Card', 'child' => "{$key}_content"],
-['id' => "{$key}_content", 'component' => 'Column', 'children' => [...]],
-['id' => "{$key}_title", 'component' => 'Text', 'text' => "#### {$title}"],
-['id' => "{$key}_meta", 'component' => 'Row', 'justify' => 'spaceBetween', 'children' => [...]],
-['id' => "{$key}_button", 'component' => 'Button', 'variant' => 'primary',
-    'child' => "{$key}_button_label", 'action' => ['event' => $action]],
+        <ol class="flex items-center gap-4 text-[24px]">
+            <li class="flow-step">il modello chiama <code>show_talk_cards</code></li>
+            <li class="text-zinc-500">→</li>
+            <li class="flow-step"><code>A2uiSurfaceBuilder</code> → JSON</li>
+            <li class="text-zinc-500">→</li>
+            <li class="flow-step">evento <code>TOOL_CALL_RESULT</code></li>
+            <li class="text-zinc-500">→</li>
+            <li class="flow-step"><code>&lt;a2ui-surface&gt;</code> disegna</li>
+        </ol>
+        <div class="flex flex-1 items-center gap-16">
+            {{-- Steps: all lines, then one line per click. data-fragment-index="0" ties each line to the mockup part with the same index. --}}
+            @verbatim
+            <pre class="flat-tree-code min-w-0 flex-1"><code class="language-php" data-trim data-line-numbers="|1|2|3|4|5" data-fragment-index="0"><script type="text/template">
+['id' => 'card', 'component' => 'Card', 'child' => 'col'],
+['id' => 'col', 'component' => 'Column', 'children' => ['title', 'row', 'btn']],
+['id' => 'title', 'component' => 'Text', 'text' => '#### RAG con pgvector'],
+['id' => 'row', 'component' => 'Row', 'children' => ['time', 'track']],
+['id' => 'btn', 'component' => 'Button', 'child' => 'label', 'action' => [...]],
+// time, track e label: altri tre Text
 </script></code></pre>
-        @endverbatim
-        <p class="muted text-[34px]">Catalogo base più un <code>Chart</code> nostro, con Chart.js: il catalogo è il contratto tra agente e app.</p>
+            @endverbatim
+            <div class="flat-tree-mock mock-part fragment" data-fragment-index="0" data-label="card · Card">
+                <div class="mock-part mock-column fragment" data-fragment-index="1" data-label="col · Column">
+                    <p class="mock-part mock-title fragment" data-fragment-index="2" data-label="title · Text">RAG con pgvector</p>
+                    <div class="mock-part mock-row fragment" data-fragment-index="3" data-label="row · Row">
+                        <span>10:20–10:55 · Sala Arena</span>
+                        <span class="mock-badge">AI</span>
+                    </div>
+                    <div class="mock-part fragment" data-fragment-index="4" data-label="btn · Button">
+                        <span class="mock-button">Aggiungi all'agenda</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="muted text-[30px]">Una lista piatta: ogni componente ha un id e indica i figli per id. Il clic su «Aggiungi» chiama <code>POST /agenda</code>, senza ripassare dal modello.</p>
     </div>
-    <aside class="notes">Una scheda A2UI è una lista piatta di componenti che si riferiscono tra loro per id. La radice è una Card con un figlio, [clic] una Column con i suoi figli. [clic] Il titolo è un Text, con il Markdown per il grassetto. [clic] Una Row mette orario e track sulla stessa riga. [clic] Il bottone ha un'azione: un evento con nome e contesto, che la pagina riceve e gestisce. Il catalogo base ha card, righe, colonne, testi, bottoni e campi di form. Per grafici, KPI e tabelle abbiamo aggiunto tre componenti Lit con derive(): Chart, che disegna con Chart.js, Stat e DataTable. Il catalogo è il contratto: l'agente può usare solo quello che c'è dentro.</aside>
+    <aside class="notes">Come arriva A2UI nella nostra chat. In alto il giro completo. Nella chat generativa il modello ha dei tool in più, come show_talk_cards, e lo chiama con gli id dei talk che ha trovato. Il tool non restituisce testo: A2uiSurfaceBuilder costruisce in PHP il JSON A2UI, con i dati dentro. Arriva al browser nell'evento AG-UI TOOL_CALL_RESULT, e il renderer Lit, l'elemento a2ui-surface, lo disegna con i componenti del catalogo. Qui sotto, semplificato, il JSON di una scheda: a destra come la vede l'utente. Non è annidato, è una lista piatta: ogni componente ha un id e indica i figli per id. [clic] La radice è una Card, con un solo figlio: col. [clic] col è una Column: mette uno sotto l'altro titolo, riga e bottone. [clic] Il titolo è un Text, con il Markdown per farlo grande. [clic] row è una Row: orario e badge della track sulla stessa riga. [clic] E il bottone, con la sua etichetta e un'azione: un evento con nome e contesto. Il clic su Aggiungi non ripassa dal modello: la pagina riceve l'evento e chiama la stessa POST /agenda del pulsante classico. Perché una lista piatta? Si aggiorna un pezzo mandando solo quel componente, si può mandare in streaming, e per un modello è più facile da scrivere giusta di un JSON annidato. Qui il modello sceglie solo quale scheda mostrare: il layout l'abbiamo scritto noi. Tra poco vediamo cosa succede quando lo scrive il modello.</aside>
 </section>
 
 <section data-background-color="#18181b" class="demo">
@@ -93,31 +136,36 @@
     <aside class="notes">Abbiamo visto componenti generati dall'agente, ma chi li ha scelti davvero? [clic] Nella chat di prima, il modello sceglie solo quale tool chiamare: show_talk_cards. Il layout della scheda l'abbiamo scritto noi in PHP. È la soluzione più sicura: la scheda è sempre uguale, la testiamo, e i bottoni fanno quello che diciamo noi. Ma per ogni nuova scheda serve un tool nuovo. [clic] Un passo avanti: diamo al modello pochi componenti generici, una card con dei numeri, un grafico, una tabella, e lui decide quale usare e con quali dati. È l'approccio della demo generative-ui di Neuron AI: un analista BI che legge il database e risponde con grafici e tabelle. [clic] L'ultimo passo: il modello scrive l'intera interfaccia. Gli diamo il catalogo dei componenti e lui compone l'albero A2UI come vuole: una riga di KPI, delle tab, un grafico, una tabella. È il caso giusto per un pannello admin, dove le domande non si possono prevedere. Il prezzo: l'albero va validato prima di mandarlo al browser, costa più token, e due domande uguali possono dare due layout diversi.</aside>
 </section>
 
-<section data-background-color="#1c1b22" class="code-slide">
+<section data-background-color="#ffffff" class="code-slide">
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">app/Neuron/Tools/RenderSurface.php</p>
             <h2>L'interfaccia la scrive il modello</h2>
         </div>
         @verbatim
-        <pre><code class="language-php" data-trim data-line-numbers="1|3|5-9|11"><script type="text/template">
-public function __invoke(string $components): string
+        <pre class="code-compact"><code class="language-php" data-trim data-line-numbers="1|3|5-14|16"><script type="text/template">
+public function __invoke(string $components): ToolOutput
 {
-    $decoded = json_decode($components, true);
+    $components = json_decode($components, true);
 
-    $errors = $this->validator->errors($decoded);
-
-    if ($errors !== []) {
-        return "Errore: l'interfaccia non è valida. Correggi e richiama render_surface.\n- ".implode("\n- ", $errors);
+    if (! is_array($components)) {
+        return ToolOutput::error('components non è un array JSON valido. Correggilo e richiama render_surface.');
     }
 
-    return json_encode(['a2ui' => $this->surfaces->generated($decoded)]);
+    $errors = $this->validator->errors($components);
+
+    if ($errors !== []) {
+        return ToolOutput::error("L'interfaccia non è valida. Correggila e richiama render_surface.\n- "
+            .implode("\n- ", $errors));
+    }
+
+    return ToolOutput::text($this->a2ui($this->surfaces->generated($components)));
 }
 </script></code></pre>
         @endverbatim
         <p class="muted text-[34px]">I dati arrivano da <code>get_statistics</code>, in sola lettura. Il catalogo nelle istruzioni: <code>Stat</code>, <code>Chart</code>, <code>DataTable</code>, più quelli di base.</p>
     </div>
-    <aside class="notes">Il tool è uno solo, render_surface, e riceve l'albero dei componenti come JSON. [clic] Lo decodifichiamo. [clic] Prima di mandarlo al browser lo validiamo: ogni componente deve essere nel catalogo, avere le proprietà giuste, e i figli devono esistere. Se qualcosa non va, non lanciamo un'eccezione: restituiamo gli errori al modello come risultato del tool. Il modello li legge, corregge l'albero e richiama il tool. [clic] Se è valido, lo avvolgiamo in una surface A2UI e la chat lo disegna come le schede di prima. Il modello non tocca mai il database direttamente: legge i numeri con get_statistics, sette report fissi in sola lettura. Nelle istruzioni gli descriviamo il catalogo: i componenti di base, più tre nostri, Stat per i KPI, Chart per i grafici con Chart.js e DataTable.</aside>
+    <aside class="notes">Il tool è uno solo, render_surface, e riceve l'albero dei componenti come JSON. [clic] Lo decodifichiamo. [clic] Prima di mandarlo al browser lo validiamo: ogni componente deve essere nel catalogo, avere le proprietà giuste, e i figli devono esistere. Se qualcosa non va, non lanciamo un'eccezione: restituiamo gli errori con ToolOutput::error, un risultato del tool marcato come errore. Il modello lo legge, corregge l'albero e richiama il tool. [clic] Se è valido, lo avvolgiamo in una surface A2UI e la chat lo disegna come le schede di prima. Il modello non tocca mai il database direttamente: legge i numeri con get_statistics, sette report fissi in sola lettura. Nelle istruzioni gli descriviamo il catalogo: i componenti di base, più tre nostri, Stat per i KPI, Chart per i grafici con Chart.js e DataTable.</aside>
 </section>
 
 <section data-background-color="#18181b" class="demo">
@@ -128,4 +176,36 @@ public function __invoke(string $components): string
         <p class="text-[32px]"><a href="{{ App\Enums\DemoStage::Admin->url() }}">Apri la dashboard admin →</a></p>
     </div>
     <aside class="notes">Pagina /admin, solo per l'organizzatore. Prima domanda: dashboard dei workshop, di solito KPI in alto, grafico e tabella. Aprire il pannello eventi e mostrare get_statistics chiamato più volte, poi render_surface con l'albero intero. Seconda domanda: talk per track, il layout cambia. Se il modello sbaglia l'albero, si vede l'errore tornare come risultato e il secondo tentativo.</aside>
+</section>
+
+<section data-background-color="#ffffff" class="code-slide">
+    <div class="flex h-full flex-col justify-center gap-10">
+        <div class="flex flex-col gap-6">
+            <p class="eyebrow">Torniamo a MCP · MCP Apps</p>
+            <h2>Un tool può avere un'interfaccia</h2>
+        </div>
+        @verbatim
+        <pre><code class="language-php" data-trim data-line-numbers="1-3|5-12|14-18"><script type="text/template">
+// app/Mcp/Tools/ListWorkshopsTool.php
+#[RendersApp(WorkshopsApp::class)]
+class ListWorkshopsTool extends Tool { … }
+
+// app/Mcp/Resources/WorkshopsApp.php
+class WorkshopsApp extends AppResource
+{
+    public function handle(Request $request): Response
+    {
+        return Response::view('mcp.workshops-app', ['roles' => CompanyRole::cases()]);
+    }
+}
+
+// resources/views/mcp/workshops-app.blade.php
+createMcpApp(async (app) => {
+    app.onToolResult((result) => render(result.structuredContent.workshops));
+    form.onsubmit = () => app.callServerTool('book_workshop', fields(form));
+});
+</script></code></pre>
+        @endverbatim
+    </div>
+    <aside class="notes">Prima di chiudere con l'ultima porta, torniamo un attimo a MCP, perché c'è un'altra strada per mostrare un'interfaccia: le MCP Apps. Di solito è il client a decidere come mostrare i risultati di un tool. Le MCP Apps sono un'estensione ufficiale del protocollo che cambia questo: un tool può portarsi dietro un pezzo di interfaccia HTML, che il client mostra dentro la chat. Basta un attributo sul tool: RendersApp. Quando il tool compare nell'elenco, il client sa che ha un'interfaccia collegata, con un URI ui://. [clic] L'interfaccia è una classe a parte, una AppResource, con MIME type text/html: è un tipo speciale di resource, la primitiva dei dati da leggere. Restituisce una vista Blade, e possiamo passarle dati dal server, qui i ruoli per il form. [clic] Nella vista, createMcpApp collega la pagina al client. Il client le passa il risultato del tool, e noi disegniamo le card dei workshop. E la pagina può chiamare altri tool: il bottone Prenota chiama book_workshop. Il client la mostra in un iframe isolato: niente cookie della nostra app, niente richieste esterne se non le dichiariamo. È lo stesso form di prenotazione che abbiamo visto con A2UI, ma con una differenza importante: con A2UI mandavamo una descrizione, solo dati, e la disegnava la nostra pagina. Qui mandiamo una pagina intera, HTML e JavaScript scritti da noi, che gira dentro il client di qualcun altro. Demo veloce in Claude Desktop: chiedere «quali workshop ci sono?». Sotto la risposta compaiono le card; compilare ruolo e azienda e cliccare Prenota. I posti scendono di uno, e ricaricando il programma la prenotazione c'è. Un dettaglio pratico: con mcp-remote in Claude Desktop va tolto il dominio dedicato, con AppMeta domain false, altrimenti l'app non si vede.</aside>
 </section>

@@ -2,7 +2,6 @@ import Reveal from 'reveal.js';
 import Highlight from 'reveal.js/plugin/highlight';
 import Notes from 'reveal.js/plugin/notes';
 import 'reveal.js/reveal.css';
-import 'reveal.js/plugin/highlight/monokai.css';
 import '../css/slides.css';
 
 // The PDF export has no viewport corner to pin the deck logo to: each slide gets its own copy.
@@ -25,6 +24,12 @@ Reveal.initialize({
     // A fading background blends the dark code slides with the light ones: switch it in one go.
     backgroundTransition: 'none',
     plugins: [Highlight, Notes],
+});
+
+// Reveal marks the slides out of view as [hidden], and Tailwind's preflight hides [hidden] with a layered
+// !important that beats Reveal's print styles: in the PDF export every slide is in view.
+Reveal.on('pdf-ready', () => {
+    document.querySelectorAll('.reveal .slides section[hidden]').forEach((slide) => slide.removeAttribute('hidden'));
 });
 
 // The demos open in the same window and carry the slide they were opened from, so they can link back to it.

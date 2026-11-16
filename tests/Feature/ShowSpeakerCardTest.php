@@ -18,7 +18,7 @@ test('the speaker card shows the photo, the bio and the sessions in time order',
     Talk::factory()->for($speaker)->create(['title' => 'Mattina', 'room' => 'Sala Arena', 'starts_at' => today()->setTime(10, 20)]);
     Workshop::factory()->for($speaker)->create(['title' => 'Server MCP', 'starts_at' => today()->setTime(14, 0)]);
 
-    $surface = json_decode(app(ShowSpeakerCard::class)($speaker->id), true)['a2ui'][0]['createSurface'];
+    $surface = a2uiSurface(app(ShowSpeakerCard::class)($speaker->id));
     $components = collect($surface['components'])->keyBy('id');
 
     expect($surface['catalogId'])->toBe(A2uiSurfaceBuilder::BASIC_CATALOG)

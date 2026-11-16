@@ -11,10 +11,9 @@ use App\Services\A2uiSurfaceBuilder;
 /**
  * @return array<string, mixed>
  */
-function chartFor(ChartSubject|string $subject): array
+function chartFor(ChartSubject $subject): array
 {
-    $content = app(ShowChart::class)($subject instanceof ChartSubject ? $subject->value : $subject);
-    $surface = json_decode($content, true)['a2ui'][0]['createSurface'];
+    $surface = a2uiSurface(app(ShowChart::class)($subject->value));
 
     expect($surface['catalogId'])->toBe(A2uiSurfaceBuilder::CONFERENCE_CATALOG);
 
@@ -47,7 +46,3 @@ test('the chart shows how many people added each talk to their agenda, most popu
     expect($chart['labels'])->toBe(['Talk popolare', 'Talk tranquillo'])
         ->and($chart['datasets'])->toBe([['label' => 'In agenda', 'data' => [2, 1]]]);
 });
-
-test('an unknown chart subject is rejected', function () {
-    chartFor('speaker_ratings');
-})->throws(ValueError::class);

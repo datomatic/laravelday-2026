@@ -99,18 +99,18 @@
                 <p class="muted mt-4 text-[30px]">Un riquadro nella pagina dove l'utente scrive.</p>
             </div>
             <p class="text-[64px] text-red-600">→</p>
-            <div class="card fragment flex-1">
+            <div class="card fragment flex-1" data-fragment-index="0">
                 <h3>Il modello</h3>
                 <p class="muted mt-4 text-[30px]">Capisce la richiesta e decide quale tool chiamare.</p>
             </div>
-            <p class="fragment text-[64px] text-red-600">→</p>
-            <div class="card fragment flex-1">
+            <p class="fragment text-[64px] text-red-600" data-fragment-index="1">→</p>
+            <div class="card fragment flex-1" data-fragment-index="1">
                 <h3>I tool</h3>
                 <p class="muted mt-4 text-[30px]">Funzioni della nostra app: cerca, aggiungi, prenota.</p>
             </div>
         </div>
     </div>
-    <aside class="notes">Il pattern lo conosciamo tutti: la chat, il modello, i tool della nostra app. Vediamolo nella demo.</aside>
+    <aside class="notes">Nell'ultimo anno in molti abbiamo aggiunto una chat alle nostre app, e il pattern è sempre lo stesso. Un riquadro nella pagina dove l'utente scrive. [clic] Il messaggio va a un modello, che capisce la richiesta e decide cosa fare. [clic] E per fare qualcosa davvero chiama dei tool: funzioni della nostra app, cerca un talk, aggiungilo all'agenda, prenota un workshop. Vediamolo nella demo, fatto come lo faremmo tutti la prima volta.</aside>
 </section>
 
 <section data-background-color="#18181b" class="demo">
@@ -131,28 +131,18 @@
         </div>
         <div class="grid grid-cols-2 gap-8">
             <div class="card fragment flex flex-col gap-4">
-                <p class="font-mono text-[28px] text-red-600">✕ Streaming</p>
-                <h3>La risposta arriva a pezzi di testo, in un formato che conosciamo solo noi</h3>
-                <p class="muted text-[28px]"><code>event: text</code> l'abbiamo inventato: senza id, con un parser scritto a mano. Un altro client non lo sa leggere.</p>
+                <p class="font-mono text-[28px] text-red-600">✕ Streaming e interfaccia</p>
+                <h3>Solo testo, a pezzi, in un formato che conosciamo solo noi</h3>
+                <p class="muted text-[28px]"><code>event: text</code> l'abbiamo inventato: senza id, con un parser scritto a mano, e un altro client non lo sa leggere. Per una scheda, un modulo o un grafico dovremmo inventare un altro formato, e un altro renderer.</p>
             </div>
             <div class="card fragment flex flex-col gap-4">
                 <p class="font-mono text-[28px] text-red-600">✕ Approvazione delle azioni</p>
                 <h3>Il modello capisce cosa vogliamo solo interpretando il nostro testo</h3>
                 <p class="muted text-[28px]">La conferma la chiede lui, a parole. Se capisce male o se ne dimentica, prenota lo stesso: il nostro server non ha modo di fermarsi.</p>
             </div>
-            <div class="card fragment flex flex-col gap-4">
-                <p class="font-mono text-[28px] text-red-600">✕ Interfaccia</p>
-                <h3>Solo testo</h3>
-                <p class="muted text-[28px]">Per una scheda, un modulo o un grafico dovremmo inventare un altro formato, e un altro renderer.</p>
-            </div>
-            <div class="card fragment flex flex-col gap-4">
-                <p class="font-mono text-[28px] text-red-600">✕ Tool</p>
-                <h3>Chiusi dentro la nostra chat</h3>
-                <p class="muted text-[28px]">Claude, Codex o l'agente del browser non li possono usare: ogni porta va riscritta da capo.</p>
-            </div>
         </div>
     </div>
-    <aside class="notes">Riprendere quello che si è visto nel pannello eventi: pezzi di testo senza id, nessuna pausa sul server, solo Markdown. Ogni app reinventa lo stesso protocollo e nessun altro client sa parlarci. Da qui: MCP per i tool, AG-UI per streaming e approvazioni, A2UI per l'interfaccia.</aside>
+    <aside class="notes">Funziona, ma guardiamo cosa abbiamo dovuto inventare. [clic] Lo streaming e l'interfaccia: nel pannello eventi si vedeva il nostro formato, event: text, pezzi di testo senza id. L'abbiamo inventato noi, con un parser scritto a mano, e nessun altro client lo sa leggere. Ed è solo testo: per una scheda o un grafico dovremmo inventare un altro formato e un altro renderer. [clic] L'approvazione: la conferma la chiede il modello, a parole. Se capisce male o se ne dimentica, prenota lo stesso, perché il server non ha modo di mettere in pausa il run. Ogni app reinventa le stesse cose. Per fortuna ci sono degli standard: MCP per i tool, AG-UI per streaming e approvazioni, A2UI per l'interfaccia.</aside>
 </section>
 
 <section>
@@ -184,7 +174,7 @@
             </div>
         </div>
     </div>
-    <aside class="notes">Tre standard da usare oggi, tre modi diversi di aprire la stessa app. WebMCP è ancora una proposta, in prova su Chrome: ne parliamo alla fine.</aside>
+    <aside class="notes">Ecco gli standard, ognuno apre la stessa app in un modo diverso. [clic] Con MCP un agente esterno, Claude, Codex, usa la nostra app come strumento: noi esponiamo i tool, il client li chiama. [clic] Con AG-UI l'agente sta dentro la nostra app e dialoga con l'utente: testo in streaming, chiamate ai tool, conferme. [clic] Con A2UI l'agente non risponde solo con del testo ma compone l'interfaccia, scegliendo dai nostri componenti. [clic] E domani WebMCP: è ancora una proposta, sperimentale in Chrome. La pagina stessa dichiara i suoi tool all'agente del browser. Ne parliamo alla fine. I primi tre si usano già oggi.</aside>
 </section>
 
 <section>
@@ -207,5 +197,5 @@
             </div>
         </div>
     </div>
-    <aside class="notes">Questo è il messaggio del talk. Ogni porta arriva alla stessa riga di codice. Funziona perché la logica vive già in un service o in una action, non dentro al controller: se l'abbiamo scritta tutta nel controller, prima va estratta. Nella chat AG-UI collega la pagina all'agente, ma l'azione la esegue l'agente sul server, chiamando il tool. Con le schede A2UI invece l'agente disegna la scheda, e il clic su + Agenda chiama la stessa rotta della pagina classica.</aside>
+    <aside class="notes">Questo è il messaggio del talk. Oggi una persona clicca + Agenda. [clic] Domani un client MCP chiama un tool. [clic] Oppure la chat nella pagina, con AG-UI e le schede A2UI. [clic] Oppure l'agente del browser con WebMCP. Ogni porta arriva alla stessa riga di codice. Funziona perché la logica vive già in un service o in una action, non dentro al controller: se l'abbiamo scritta tutta nel controller, prima va estratta. Nella chat AG-UI collega la pagina all'agente, ma l'azione la esegue l'agente sul server, chiamando il tool. Con le schede A2UI invece l'agente disegna la scheda, e il clic su + Agenda chiama la stessa rotta della pagina classica.</aside>
 </section>

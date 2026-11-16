@@ -4,7 +4,7 @@
       "type": "streamable-http",
       "url": "https://laravelday.test/mcp/conference",
       "headers": {
-        "Authorization": "Bearer 1|iqjoINHj8EOujsPyGbcfEmigaRIh82oHRT5kRAzUa613c6d1"
+        "Authorization": "Bearer 1|AvhPwVpbbXwP5CmYQpY06tF3tXrH7c9giCQflAlp9464b472"
       }
     }
   }

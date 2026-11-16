@@ -7,7 +7,7 @@
     --slide-muted: #52525b;
     --slide-paper: #f4f4f1;
     --slide-accent: #dc2626;
-    --slide-code: #1c1b22;
+    --slide-code: #ffffff;
 }
 
 body {
@@ -104,15 +104,15 @@ body {
     }
 }
 
-/* Parked just past the right edge for most of the cycle, then a five-second pass to the left along the bottom. */
+/* A 800s cycle passes three times in a 40-minute talk: parked past the right edge, then a five-second pass along the bottom. */
 .supercar {
     position: absolute;
     bottom: 1vh;
     left: 100%;
     height: 16vh;
     aspect-ratio: 3 / 1;
-    animation: supercar-drive 40s linear infinite;
-    animation-delay: 6s;
+    animation: supercar-drive 800s linear infinite;
+    animation-delay: -20s;
 }
 
 .supercar img {
@@ -152,7 +152,7 @@ body {
 
 @keyframes supercar-drive {
     0%,
-    87% {
+    99.35% {
         transform: translateX(0);
     }
 
@@ -169,15 +169,15 @@ body {
     pointer-events: none;
 }
 
-/* Same 40s cycle as the car, but half a cycle apart: the plane crosses the top, left to right, while the car is parked. */
+/* Same 800s cycle as the car, half a cycle apart: the plane crosses the top, left to right, while the car is parked. */
 .airplane {
     position: absolute;
     top: 14vh;
     right: 100%;
     height: 18vh;
     aspect-ratio: 1400 / 541;
-    animation: airplane-fly 40s linear infinite;
-    animation-delay: -8s;
+    animation: airplane-fly 800s linear infinite;
+    animation-delay: -400s;
 }
 
 .airplane img {
@@ -189,7 +189,7 @@ body {
 
 @keyframes airplane-fly {
     0%,
-    80% {
+    99% {
         transform: translateX(0);
     }
 
@@ -394,22 +394,17 @@ html.print-pdf .slides-flyby {
     transform: rotate(2.5deg);
 }
 
-/* Code slides are dark edge to edge: the code block melts into the slide instead of sitting in a box. */
+/*
+ * Code slides are white edge to edge, which reads best on a projector: the code block melts into the slide
+ * instead of sitting in a box.
+ */
 .reveal .code-slide {
-    color: #fdfdfb;
-}
-
-.reveal .code-slide .eyebrow {
-    color: #fca5a5;
-}
-
-.reveal .code-slide .muted {
-    color: #a1a1aa;
+    color: var(--slide-ink);
 }
 
 .reveal .code-slide :not(pre) > code {
-    background: #34333d;
-    color: #fdfdfb;
+    background: #e4e4e7;
+    color: var(--slide-ink);
 }
 
 /* Same colour as the slide, not transparent: each step must hide the one below it. */
@@ -482,4 +477,190 @@ html.print-pdf .reveal .slide-logo {
 
 .reveal .progress {
     color: var(--slide-accent);
+}
+
+/* Code blocks whose real lines are long: smaller type instead of a horizontal scrollbar. */
+.reveal pre.code-compact {
+    font-size: 23px;
+}
+
+/*
+ * "Una scheda è un albero piatto": a mockup of the talk card next to its A2UI components.
+ * Each part is a fragment only to light up together with its code line: it is always visible.
+ */
+.reveal .flat-tree-code {
+    font-size: 22px;
+}
+
+.reveal .flat-tree-mock {
+    width: 500px;
+    flex-shrink: 0;
+    padding: 56px 28px 28px;
+    border: 2px solid #e4e4e0;
+    border-radius: 24px;
+    background: #fdfdfb;
+    color: #18181b;
+}
+
+.reveal .mock-part.fragment {
+    position: relative;
+    opacity: 1;
+    visibility: inherit;
+    outline: 2px dashed #a1a1aa;
+    outline-offset: 6px;
+    border-radius: 12px;
+    transition: outline-color 0.2s ease;
+}
+
+.reveal .mock-part::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -32px;
+    left: 0;
+    padding: 2px 10px;
+    border-radius: 6px;
+    background: #52525b;
+    color: #fdfdfb;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 16px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.reveal .flat-tree-mock.mock-part::before {
+    top: -40px;
+}
+
+.reveal .mock-part.current-fragment {
+    outline: 3px solid #ef4444;
+}
+
+.reveal .mock-part.current-fragment::before {
+    background: #dc2626;
+}
+
+.reveal .mock-column {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    padding: 52px 16px 16px;
+}
+
+.reveal .mock-title {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.reveal .mock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 22px;
+    color: #52525b;
+}
+
+.reveal .mock-badge {
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.reveal .mock-button {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 12px;
+    background: #dc2626;
+    color: #fdfdfb;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.reveal .flow-step {
+    padding: 8px 16px;
+    border: 2px solid #d4d4d8;
+    border-radius: 14px;
+    white-space: nowrap;
+}
+
+/*
+ * PDF export: Reveal wraps each slide in a .pdf-page and zeroes its padding, and each code block would show only its last
+ * highlight step. Keep the margins and print the whole code at full strength.
+ */
+html.reveal-print .reveal .slides .pdf-page > section {
+    height: 100%;
+    padding: 72px 96px !important;
+}
+
+html.reveal-print .reveal pre code.fragment {
+    display: none !important;
+}
+
+html.reveal-print .reveal .hljs.has-highlights tr:not(.highlight-line) {
+    opacity: 1;
+}
+
+/*
+ * Light, high-contrast syntax colours (instead of a dark highlight.js theme): saturated -700 shades that
+ * survive a washed-out projector.
+ */
+.reveal .hljs {
+    color: var(--slide-ink);
+    background: var(--slide-code);
+    font-weight: 500;
+}
+
+.reveal .hljs-keyword,
+.reveal .hljs-selector-tag {
+    color: #be123c;
+}
+
+.reveal .hljs-string,
+.reveal .hljs-regexp {
+    color: #15803d;
+}
+
+.reveal .hljs-title,
+.reveal .hljs-title.function_,
+.reveal .hljs-section {
+    color: #1d4ed8;
+}
+
+.reveal .hljs-title.class_,
+.reveal .hljs-type,
+.reveal .hljs-built_in {
+    color: #7c3aed;
+}
+
+.reveal .hljs-variable,
+.reveal .hljs-template-variable {
+    color: #b45309;
+}
+
+.reveal .hljs-number,
+.reveal .hljs-literal {
+    color: #0e7490;
+}
+
+.reveal .hljs-attr,
+.reveal .hljs-property,
+.reveal .hljs-attribute {
+    color: #0369a1;
+}
+
+.reveal .hljs-comment,
+.reveal .hljs-quote {
+    color: #71717a;
+    font-style: italic;
+}
+
+.reveal .hljs-meta {
+    color: #6b7280;
+}
+
+.reveal .hljs-ln-numbers {
+    color: #a1a1aa;
 }

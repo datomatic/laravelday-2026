@@ -56,11 +56,6 @@ class Talk extends Model
     /**
      * A talk alone in its time slot, such as the opening: everyone attends, there is nothing to choose.
      */
-    public function isPlenary(): bool
-    {
-        return ! static::where('starts_at', $this->starts_at)->where('id', '!=', $this->id)->exists();
-    }
-
     /**
      * @return array{id: int, title: string, abstract: string, track: string, room: string, starts_at: string, ends_at: string, speaker_id: int, speaker: string}
      */

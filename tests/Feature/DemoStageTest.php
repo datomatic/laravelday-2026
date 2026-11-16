@@ -2,7 +2,6 @@
 
 use App\Enums\DemoStage;
 use App\Models\User;
-use App\Models\Workshop;
 
 test('the home links every stage of the demo in order', function () {
     $this->actingAs(User::factory()->create())->get(route('home'))
@@ -42,15 +41,6 @@ test('the homemade chat talks to its own endpoint and logs its own events', func
 
 test('an unknown stage is not found', function () {
     $this->actingAs(User::factory()->create())->get('/programma/sconosciuta')->assertNotFound();
-});
-
-test('the workshop booking form opens in a modal', function () {
-    $workshop = Workshop::factory()->create(['capacity' => 5]);
-
-    $this->actingAs(User::factory()->create())->get(route('schedule', DemoStage::Classic))
-        ->assertOk()
-        ->assertSee('commandfor="booking-'.$workshop->id.'" command="show-modal"', false)
-        ->assertSee('<dialog id="booking-'.$workshop->id.'"', false);
 });
 
 test('the demo links back to the slide it was opened from', function () {

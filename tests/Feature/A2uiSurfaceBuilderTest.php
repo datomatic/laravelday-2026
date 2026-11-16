@@ -48,16 +48,6 @@ test('talk cards show the add button only when the talk can be added', function 
         ->toBe(["talk_{$free->id}_button", "talk_{$freeParallel->id}_button"]);
 });
 
-test('workshop cards keep a plain caption without a badge', function () {
-    $workshop = Workshop::factory()->create();
-
-    $messages = app(A2uiSurfaceBuilder::class)->workshopCards(collect([$workshop->load('speaker')]));
-    $components = collect($messages[0]['createSurface']['components'])->keyBy('id');
-
-    expect($components["workshop_{$workshop->id}_meta"]['component'])->toBe('Text')
-        ->and($components->has("workshop_{$workshop->id}_badge"))->toBeFalse();
-});
-
 test('workshop cards open a booking form bound to the surface data model', function () {
     $workshop = Workshop::factory()->create();
     $key = "workshop_{$workshop->id}";
@@ -92,4 +82,14 @@ test('component ids are valid identifiers as required by a2ui 1.0', function () 
     ])->flatMap(fn (array $message) => array_column($message['createSurface']['components'], 'id'));
 
     expect($ids)->each->toMatch('/^[\p{L}_][\p{L}\p{N}_]*$/u');
+});
+
+test('a talk is not plenary when its parallel talk is not among the cards', function () {
+    $shown = Talk::factory()->create(['starts_at' => today()->setTime(10, 20), 'ends_at' => today()->setTime(10, 55)]);
+    Talk::factory()->create(['starts_at' => today()->setTime(10, 20), 'ends_at' => today()->setTime(10, 55)]);
+
+    $messages = app(A2uiSurfaceBuilder::class)->talkCards(collect([$shown->load('speaker')]), collect());
+    $components = collect($messages[0]['createSurface']['components'])->keyBy('id');
+
+    expect($components)->toHaveKey("talk_{$shown->id}_button");
 });

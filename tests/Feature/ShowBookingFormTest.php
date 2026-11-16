@@ -9,7 +9,7 @@ test('the booking form is a card with the form fields bound to its data model', 
     $workshop = Workshop::factory()->create(['title' => 'Testing con Pest']);
     $key = "workshop_{$workshop->id}";
 
-    $surface = json_decode(app(ShowBookingForm::class)($workshop->id), true)['a2ui'][0]['createSurface'];
+    $surface = a2uiSurface(app(ShowBookingForm::class)($workshop->id));
     $components = collect($surface['components'])->keyBy('id');
 
     expect($surface['catalogId'])->toBe(A2uiSurfaceBuilder::BASIC_CATALOG)
