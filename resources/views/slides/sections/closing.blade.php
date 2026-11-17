@@ -74,18 +74,18 @@
             </div>
             <div class="card fragment flex flex-col gap-6">
                 <p class="font-mono text-[56px] text-red-600">2</p>
-                <h3>Più porte, una sola logica</h3>
-                <p class="muted text-[32px]">Ogni porta è una classe sottile sopra lo stesso service. Il tool si scrive una volta.</p>
+                <h3>Scrivi i tool per il modello</h3>
+                <p class="muted text-[32px]">Nome, descrizione e schema sono tutto ciò che sa della tua app. Sono il prompt.</p>
             </div>
             <div class="card fragment flex flex-col gap-6">
                 <p class="font-mono text-[56px] text-red-600">3</p>
-                <h3>Il modello propone, l'app decide</h3>
-                <p class="muted text-[32px]">Utente dal token, conferme dal server, interfaccia dal nostro catalogo.</p>
+                <h3>Decidi quanto lasciare al modello</h3>
+                <p class="muted text-[32px]">Layout scritto da te, componenti scelti da lui o interfaccia intera: più libertà, più controlli.</p>
             </div>
         </div>
         <p class="fragment text-[36px]"><span class="text-red-600">Lunedì:</span> un server MCP con un tool in sola lettura, e provatelo in Claude.</p>
     </div>
-    <aside class="notes">Se vi portate a casa tre cose. [clic] Prima: non reinventate il protocollo. La chat fatta in casa funzionava, ma lo streaming, le conferme e l'interfaccia li avevamo inventati noi: li capiva solo la nostra pagina, e la conferma la chiedeva il modello a parole. MCP, AG-UI e A2UI hanno già risolto questi problemi, e vi rendono compatibili con client che non avete scritto voi. [clic] Seconda: più porte, una sola logica. Oggi abbiamo aperto quattro porte e tutte arrivano allo stesso service. Ogni porta è una classe sottile, e il tool l'abbiamo scritto una volta sola: lo usano Claude e la nostra chat. Se la logica sta nei controller, il primo lavoro è estrarla. [clic] Terza: il modello propone, l'app decide. Il modello sceglie il tool e gli argomenti, ma chi è l'utente lo dice il token, le azioni che contano le conferma il server con una persona, e l'interfaccia passa dal nostro catalogo e dal validatore. Più libertà gli diamo, più controlli servono. [clic] E se volete fare una cosa sola lunedì: un server MCP con un tool in sola lettura, una ricerca o un elenco. Lo collegate a Claude e vedete la vostra app usata da un agente.</aside>
+    <aside class="notes">Se vi portate a casa tre cose. [clic] Prima: non reinventate il protocollo. La chat fatta in casa funzionava, ma lo streaming, le conferme e l'interfaccia li avevamo inventati noi: li capiva solo la nostra pagina, e la conferma la chiedeva il modello a parole. MCP, AG-UI e A2UI hanno già risolto questi problemi, e vi rendono compatibili con client che non avete scritto voi. [clic] Seconda: scrivete i tool per il modello. Il modello non vede il vostro codice: conosce la vostra app solo dal nome, dalla descrizione e dallo schema di ogni tool. Sono il suo prompt. Una descrizione che dice «se non conosci ruolo e azienda chiedili, non inventarli» vale più di dieci righe di codice difensivo. Scrivetele come la documentazione per un collega appena arrivato. [clic] Terza: decidete quanto lasciare al modello. Abbiamo visto tre livelli: la scheda scritta da noi in PHP, il modello che sceglie un componente, il modello che compone tutta la dashboard. Non c'è un livello giusto: per le azioni dei nostri utenti vogliamo schede prevedibili e testate, per un pannello admin con domande imprevedibili possiamo lasciargli comporre l'interfaccia. Più libertà gli diamo, più dobbiamo validare quello che produce. [clic] E se volete fare una cosa sola lunedì: un server MCP con un tool in sola lettura, una ricerca o un elenco. Lo collegate a Claude e vedete la vostra app usata da un agente.</aside>
 </section>
 
 <section data-background-color="#18181b" class="divider">
@@ -93,16 +93,28 @@
         <div class="flex flex-col gap-12">
             <p class="eyebrow">LaravelDay 2026 · Verona · 18 novembre</p>
             <h1>Grazie!</h1>
-            <div class="flex flex-col gap-6 font-mono text-[40px]">
+            <div class="flex flex-col gap-6 font-mono text-[34px] whitespace-nowrap">
                 <a href="https://github.com/datomatic/laravelday-2026" target="_blank">github.com/datomatic/laravelday-2026</a>
                 <a href="https://albertoperipolli.com" target="_blank">albertoperipolli.com</a>
             </div>
             <p class="text-[36px] text-zinc-300">Domande?</p>
         </div>
-        <figure class="flex shrink-0 flex-col items-center gap-6">
-            <img src="{{ asset('images/slides/qr-alberto.png') }}" alt="QR code per albertoperipolli.com" class="size-[420px] rounded-3xl bg-white p-6">
-            <figcaption class="font-mono text-[28px] text-zinc-300">albertoperipolli.com</figcaption>
-        </figure>
+        <div class="flex shrink-0 flex-col items-center gap-10">
+            <div class="flex gap-10">
+                <figure class="flex flex-col items-center gap-4">
+                    <img src="{{ asset('images/slides/qr-repo.png') }}" alt="QR code per github.com/datomatic/laravelday-2026" class="size-[200px] rounded-2xl bg-white p-4">
+                    <figcaption class="font-mono text-[22px] text-zinc-300">Codice e slide</figcaption>
+                </figure>
+                <figure class="flex flex-col items-center gap-4">
+                    <img src="{{ asset('images/slides/qr-alberto.png') }}" alt="QR code per albertoperipolli.com" class="size-[200px] rounded-2xl bg-white p-4">
+                    <figcaption class="font-mono text-[22px] text-zinc-300">albertoperipolli.com</figcaption>
+                </figure>
+            </div>
+            <figure class="flex flex-col items-center gap-4">
+                <img src="{{ asset('images/slides/qr-review.png') }}" alt="QR code per lasciare una recensione del talk" class="size-[440px] rounded-3xl bg-white">
+                <figcaption class="text-[32px] text-white">Com'è andato il talk? Lascia una recensione</figcaption>
+            </figure>
+        </div>
     </div>
-    <aside class="notes">Grazie. Il codice della demo e le slide sono su GitHub; il QR porta al mio sito, dove trovate i contatti. Domande?</aside>
+    <aside class="notes">Grazie. Il QR grande serve per lasciare una recensione del talk: mi aiuta molto, bastano trenta secondi. Sopra, il codice della demo e le slide su GitHub, e il mio sito con i contatti. Domande?</aside>
 </section>

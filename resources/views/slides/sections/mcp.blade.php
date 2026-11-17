@@ -155,16 +155,20 @@ class AddToAgendaTool extends Tool
             <h2>Le notifiche partono subito</h2>
         </div>
         @verbatim
-        <pre><code class="language-php" data-trim data-line-numbers="1|5-9|11"><script type="text/template">
+        <pre class="code-compact"><code class="language-php" data-trim data-line-numbers="1|4|6-13|15"><script type="text/template">
 public function handle(Request $request, AgendaService $agenda): Generator
 {
     $talks = $agenda->talksFor($request->user());
+    $token = $request->meta()['progressToken'] ?? null;
 
     foreach ($talks as $index => $talk) {
-        yield Response::notification('processing/progress', [
-            'current' => $index + 1,
-            'total' => $talks->count(),
-        ]);
+        if ($token !== null) {
+            yield Response::notification('notifications/progress', [
+                'progressToken' => $token,
+                'progress' => $index + 1,
+                'total' => $talks->count(),
+            ]);
+        }
 
         yield Response::text($this->exportToCalendar($talk));
     }
@@ -172,7 +176,7 @@ public function handle(Request $request, AgendaService $agenda): Generator
 </script></code></pre>
         @endverbatim
     </div>
-    <aside class="notes">Un esempio che nella demo non c'è: esportare l'agenda in un calendario, un talk alla volta. handle restituisce un Generator invece di una Response. [clic] A ogni giro facciamo yield di una notifica di progresso: laravel/mcp apre uno stream SSE e la manda subito al client, che può mostrare "3 di 8". [clic] Le Response normali invece vengono raccolte e il client le riceve tutte insieme alla fine, come risultato del tool. Quindi in streaming va l'avanzamento, non il risultato.</aside>
+    <aside class="notes">Un esempio che nella demo non c'è: esportare l'agenda in un calendario, un talk alla volta. handle restituisce un Generator invece di una Response. [clic] Il client che vuole vedere l'avanzamento manda un progressToken nei metadati della richiesta: se non c'è, niente notifiche. [clic] A ogni giro facciamo yield di notifications/progress, la notifica standard di MCP: laravel/mcp apre uno stream SSE e la manda subito, e il client può mostrare "3 di 8". Attenzione: la documentazione di Laravel usa un nome inventato, processing/progress, che i client ricevono ma non mostrano. [clic] Le Response normali invece vengono raccolte e il client le riceve tutte insieme alla fine, come risultato del tool. Quindi in streaming va l'avanzamento, non il risultato.</aside>
 </section>
 
 <section>

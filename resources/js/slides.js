@@ -23,6 +23,8 @@ Reveal.initialize({
     transitionSpeed: 'fast',
     // A fading background blends the dark code slides with the light ones: switch it in one go.
     backgroundTransition: 'none',
+    // The PDF is a handout: one page per slide with every step shown, not one page per click.
+    pdfSeparateFragments: false,
     plugins: [Highlight, Notes],
 });
 

@@ -1,10 +1,10 @@
 <section data-background-color="#dc2626" class="divider">
     <div class="flex h-full flex-col justify-center gap-10">
         <p class="eyebrow">Porta 2</p>
-        <h1>AG-UI</h1>
-        <p class="text-[48px]">Un agente dentro l'app, in streaming.</p>
+        <h1>La chat nella pagina</h1>
+        <p class="text-[48px]">Prima fatta in casa, poi con AG-UI e A2UI.</p>
     </div>
-    <aside class="notes">La seconda porta: AG-UI. Ora l'agente lo portiamo dentro la nostra app, nella nostra pagina, per i nostri utenti. Prima però facciamolo come l'abbiamo fatto tutti la prima volta.</aside>
+    <aside class="notes">La seconda porta: la chat nella nostra pagina. Ora l'agente lo portiamo dentro la nostra app, nella nostra pagina, per i nostri utenti. Prima però facciamolo come l'abbiamo fatto tutti la prima volta.</aside>
 </section>
 
 <section>

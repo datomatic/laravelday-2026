@@ -1,13 +1,4 @@
-<section data-background-color="#dc2626" class="divider" data-flyby="car">
-    <div class="flex h-full flex-col justify-center gap-10">
-        <p class="eyebrow">Porta 3</p>
-        <h1>A2UI</h1>
-        <p class="text-[48px]">L'agente compone l'interfaccia, l'app decide come mostrarla.</p>
-    </div>
-    <aside class="notes">La terza porta: A2UI. Finora l'agente risponde con del testo: ora gli facciamo comporre l'interfaccia.</aside>
-</section>
-
-<section>
+<section data-flyby="car">
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">Cos'è A2UI · Agent to User Interface</p>
@@ -39,7 +30,7 @@
             </div>
         </div>
     </div>
-    <aside class="notes">Che cos'è A2UI. Sta per Agent to User Interface: è un protocollo aperto, nato in Google, per far mostrare all'agente delle interfacce invece del solo testo. Il punto chiave è il catalogo. L'app dichiara quali componenti sa disegnare: card, colonne, righe, testi, immagini, bottoni, campi di form, modali, tab. Questi grigi sono il catalogo base di A2UI; i tre rossi, Chart, Stat e DataTable, li abbiamo aggiunti noi. L'agente non scrive HTML: risponde con un JSON che sceglie componenti da quel catalogo e li riempie di dati, per esempio una card con dentro un titolo e un bottone. Poi è l'app che li disegna, con i suoi componenti e il suo stile: sul web con Lit, come facciamo noi, ma lo stesso JSON può diventare un'interfaccia Flutter o Angular. E AG-UI, che abbiamo appena visto? [clic] Non è un'alternativa: è il canale. Porta gli eventi della chat, il testo, le chiamate ai tool, le conferme, ma non dice niente su come appare l'interfaccia. [clic] A2UI è il pezzo che mancava: mostra i dati con i componenti della nostra app. Manda solo dati, componenti del catalogo riempiti con i nostri valori. Non c'è codice da eseguire, quindi è sicuro anche quando il JSON lo scrive un modello, e l'interfaccia sembra nativa. E viaggia dentro AG-UI, nel risultato di un tool. Vediamo come lo usiamo nella nostra chat.</aside>
+    <aside class="notes">Restiamo nella chat, ma cambiamo cosa risponde l'agente: finora testo, ora interfaccia. Che cos'è A2UI. Sta per Agent to User Interface: è un protocollo aperto, nato in Google, per far mostrare all'agente delle interfacce invece del solo testo. Il punto chiave è il catalogo. L'app dichiara quali componenti sa disegnare: card, colonne, righe, testi, immagini, bottoni, campi di form, modali, tab. Questi grigi sono il catalogo base di A2UI; i tre rossi, Chart, Stat e DataTable, li abbiamo aggiunti noi. L'agente non scrive HTML: risponde con un JSON che sceglie componenti da quel catalogo e li riempie di dati, per esempio una card con dentro un titolo e un bottone. Poi è l'app che li disegna, con i suoi componenti e il suo stile: sul web con Lit, come facciamo noi, ma lo stesso JSON può diventare un'interfaccia Flutter o Angular. E AG-UI, che abbiamo appena visto? [clic] Non è un'alternativa: è il canale. Porta gli eventi della chat, il testo, le chiamate ai tool, le conferme, ma non dice niente su come appare l'interfaccia. [clic] A2UI è il pezzo che mancava: mostra i dati con i componenti della nostra app. Manda solo dati, componenti del catalogo riempiti con i nostri valori. Non c'è codice da eseguire, quindi è sicuro anche quando il JSON lo scrive un modello, e l'interfaccia sembra nativa. E viaggia dentro AG-UI, nel risultato di un tool. Vediamo come lo usiamo nella nostra chat.</aside>
 </section>
 
 <section data-background-color="#ffffff" class="code-slide">
