@@ -45,7 +45,7 @@ test('add to agenda stores the talk for the authenticated user only once', funct
     $talk = Talk::factory()->create();
 
     ConferenceServer::actingAs($user)->tool(AddToAgendaTool::class, ['talk_id' => $talk->id])->assertOk()->assertSee($talk->title);
-    ConferenceServer::actingAs($user)->tool(AddToAgendaTool::class, ['talk_id' => $talk->id])->assertOk();
+    ConferenceServer::actingAs($user)->tool(AddToAgendaTool::class, ['talk_id' => $talk->id])->assertHasErrors(['già nella tua agenda']);
 
     expect(AgendaItem::where('user_id', $user->id)->where('talk_id', $talk->id)->count())->toBe(1);
 });
@@ -120,6 +120,18 @@ test('book workshop asks for role and company', function () {
         ->assertHasErrors(['company role', 'company name']);
 
     expect(WorkshopBooking::count())->toBe(0);
+});
+
+test('book workshop fails when the user already has a seat', function () {
+    $user = User::factory()->create();
+    $workshop = Workshop::factory()->create();
+    WorkshopBooking::factory()->for($workshop)->for($user)->create();
+
+    ConferenceServer::actingAs($user)
+        ->tool(BookWorkshopTool::class, ['workshop_id' => $workshop->id, 'company_role' => CompanyRole::Cto->value, 'company_name' => 'Acme'])
+        ->assertHasErrors(['Hai già un posto']);
+
+    expect(WorkshopBooking::where('user_id', $user->id)->count())->toBe(1);
 });
 
 test('book workshop fails when the workshop is full', function () {

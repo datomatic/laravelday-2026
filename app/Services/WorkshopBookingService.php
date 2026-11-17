@@ -26,10 +26,10 @@ class WorkshopBookingService
     public function book(User $user, Workshop $workshop, CompanyRole $companyRole, string $companyName): WorkshopBooking
     {
         return DB::transaction(function () use ($user, $workshop, $companyRole, $companyName): WorkshopBooking {
-            $existing = $workshop->bookings()->where('user_id', $user->id)->first();
-
-            if ($existing) {
-                return $existing;
+            if ($workshop->bookings()->where('user_id', $user->id)->exists()) {
+                throw ValidationException::withMessages([
+                    'workshop_id' => "Hai già un posto al workshop \"{$workshop->title}\".",
+                ]);
             }
 
             if ($workshop->bookings()->count() >= $workshop->capacity) {

@@ -1,4 +1,4 @@
-<section data-background-color="#dc2626" class="divider">
+<section data-background-color="#dc2626" class="divider" data-flyby="car">
     <div class="flex h-full flex-col justify-center gap-10">
         <p class="eyebrow">Porta 3</p>
         <h1>A2UI</h1>
@@ -136,38 +136,6 @@
     <aside class="notes">Abbiamo visto componenti generati dall'agente, ma chi li ha scelti davvero? [clic] Nella chat di prima, il modello sceglie solo quale tool chiamare: show_talk_cards. Il layout della scheda l'abbiamo scritto noi in PHP. È la soluzione più sicura: la scheda è sempre uguale, la testiamo, e i bottoni fanno quello che diciamo noi. Ma per ogni nuova scheda serve un tool nuovo. [clic] Un passo avanti: diamo al modello pochi componenti generici, una card con dei numeri, un grafico, una tabella, e lui decide quale usare e con quali dati. È l'approccio della demo generative-ui di Neuron AI: un analista BI che legge il database e risponde con grafici e tabelle. [clic] L'ultimo passo: il modello scrive l'intera interfaccia. Gli diamo il catalogo dei componenti e lui compone l'albero A2UI come vuole: una riga di KPI, delle tab, un grafico, una tabella. È il caso giusto per un pannello admin, dove le domande non si possono prevedere. Il prezzo: l'albero va validato prima di mandarlo al browser, costa più token, e due domande uguali possono dare due layout diversi.</aside>
 </section>
 
-<section data-background-color="#ffffff" class="code-slide">
-    <div class="flex h-full flex-col gap-12">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">app/Neuron/Tools/RenderSurface.php</p>
-            <h2>L'interfaccia la scrive il modello</h2>
-        </div>
-        @verbatim
-        <pre class="code-compact"><code class="language-php" data-trim data-line-numbers="1|3|5-14|16"><script type="text/template">
-public function __invoke(string $components): ToolOutput
-{
-    $components = json_decode($components, true);
-
-    if (! is_array($components)) {
-        return ToolOutput::error('components non è un array JSON valido. Correggilo e richiama render_surface.');
-    }
-
-    $errors = $this->validator->errors($components);
-
-    if ($errors !== []) {
-        return ToolOutput::error("L'interfaccia non è valida. Correggila e richiama render_surface.\n- "
-            .implode("\n- ", $errors));
-    }
-
-    return ToolOutput::text($this->a2ui($this->surfaces->generated($components)));
-}
-</script></code></pre>
-        @endverbatim
-        <p class="muted text-[34px]">I dati arrivano da <code>get_statistics</code>, in sola lettura. Il catalogo nelle istruzioni: <code>Stat</code>, <code>Chart</code>, <code>DataTable</code>, più quelli di base.</p>
-    </div>
-    <aside class="notes">Il tool è uno solo, render_surface, e riceve l'albero dei componenti come JSON. [clic] Lo decodifichiamo. [clic] Prima di mandarlo al browser lo validiamo: ogni componente deve essere nel catalogo, avere le proprietà giuste, e i figli devono esistere. Se qualcosa non va, non lanciamo un'eccezione: restituiamo gli errori con ToolOutput::error, un risultato del tool marcato come errore. Il modello lo legge, corregge l'albero e richiama il tool. [clic] Se è valido, lo avvolgiamo in una surface A2UI e la chat lo disegna come le schede di prima. Il modello non tocca mai il database direttamente: legge i numeri con get_statistics, sette report fissi in sola lettura. Nelle istruzioni gli descriviamo il catalogo: i componenti di base, più tre nostri, Stat per i KPI, Chart per i grafici con Chart.js e DataTable.</aside>
-</section>
-
 <section data-background-color="#18181b" class="demo">
     <div class="flex h-full flex-col justify-center gap-10">
         <p class="eyebrow">Demo · Passaggio {{ App\Enums\DemoStage::Admin->step() }}</p>
@@ -178,34 +146,21 @@ public function __invoke(string $components): ToolOutput
     <aside class="notes">Pagina /admin, solo per l'organizzatore. Prima domanda: dashboard dei workshop, di solito KPI in alto, grafico e tabella. Aprire il pannello eventi e mostrare get_statistics chiamato più volte, poi render_surface con l'albero intero. Seconda domanda: talk per track, il layout cambia. Se il modello sbaglia l'albero, si vede l'errore tornare come risultato e il secondo tentativo.</aside>
 </section>
 
-<section data-background-color="#ffffff" class="code-slide">
-    <div class="flex h-full flex-col justify-center gap-10">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">Torniamo a MCP · MCP Apps</p>
-            <h2>Un tool può avere un'interfaccia</h2>
+<section>
+    <div class="flex h-full items-center gap-20">
+        <div class="flex flex-1 flex-col gap-10">
+            <div class="flex flex-col gap-6">
+                <p class="eyebrow">Torniamo a MCP · MCP Apps</p>
+                <h2>Un tool può avere un'interfaccia</h2>
+            </div>
+            <ul class="flex flex-col gap-6 text-[30px]">
+                <li>Un attributo sul tool, <code>#[RendersApp]</code>, collega una vista Blade</li>
+                <li><code>list_workshops</code> risponde con i dati, il client mostra la nostra pagina</li>
+                <li>Il bottone <b>Prenota</b> chiama <code>book_workshop</code></li>
+                <li class="muted">Gira in un iframe isolato: niente cookie, niente richieste non dichiarate</li>
+            </ul>
         </div>
-        @verbatim
-        <pre><code class="language-php" data-trim data-line-numbers="1-3|5-12|14-18"><script type="text/template">
-// app/Mcp/Tools/ListWorkshopsTool.php
-#[RendersApp(WorkshopsApp::class)]
-class ListWorkshopsTool extends Tool { … }
-
-// app/Mcp/Resources/WorkshopsApp.php
-class WorkshopsApp extends AppResource
-{
-    public function handle(Request $request): Response
-    {
-        return Response::view('mcp.workshops-app', ['roles' => CompanyRole::cases()]);
-    }
-}
-
-// resources/views/mcp/workshops-app.blade.php
-createMcpApp(async (app) => {
-    app.onToolResult((result) => render(result.structuredContent.workshops));
-    form.onsubmit = () => app.callServerTool('book_workshop', fields(form));
-});
-</script></code></pre>
-        @endverbatim
+        <img src="{{ asset('images/slides/mcp-app-claude.png') }}" alt="Claude Desktop: alla domanda «Quali workshop ci sono?» il tool list_workshops mostra le card dei workshop con orario, speaker, posti, ruolo, azienda e bottone Prenota" class="aspect-[1570/1190] w-[1000px] shrink-0 rounded-3xl object-cover object-top shadow-2xl">
     </div>
-    <aside class="notes">Prima di chiudere con l'ultima porta, torniamo un attimo a MCP, perché c'è un'altra strada per mostrare un'interfaccia: le MCP Apps. Di solito è il client a decidere come mostrare i risultati di un tool. Le MCP Apps sono un'estensione ufficiale del protocollo che cambia questo: un tool può portarsi dietro un pezzo di interfaccia HTML, che il client mostra dentro la chat. Basta un attributo sul tool: RendersApp. Quando il tool compare nell'elenco, il client sa che ha un'interfaccia collegata, con un URI ui://. [clic] L'interfaccia è una classe a parte, una AppResource, con MIME type text/html: è un tipo speciale di resource, la primitiva dei dati da leggere. Restituisce una vista Blade, e possiamo passarle dati dal server, qui i ruoli per il form. [clic] Nella vista, createMcpApp collega la pagina al client. Il client le passa il risultato del tool, e noi disegniamo le card dei workshop. E la pagina può chiamare altri tool: il bottone Prenota chiama book_workshop. Il client la mostra in un iframe isolato: niente cookie della nostra app, niente richieste esterne se non le dichiariamo. È lo stesso form di prenotazione che abbiamo visto con A2UI, ma con una differenza importante: con A2UI mandavamo una descrizione, solo dati, e la disegnava la nostra pagina. Qui mandiamo una pagina intera, HTML e JavaScript scritti da noi, che gira dentro il client di qualcun altro. Demo veloce in Claude Desktop: chiedere «quali workshop ci sono?». Sotto la risposta compaiono le card; compilare ruolo e azienda e cliccare Prenota. I posti scendono di uno, e ricaricando il programma la prenotazione c'è. Un dettaglio pratico: con mcp-remote in Claude Desktop va tolto il dominio dedicato, con AppMeta domain false, altrimenti l'app non si vede.</aside>
+    <aside class="notes">Prima di chiudere con l'ultima porta, torniamo un attimo a MCP, perché c'è un'altra strada per mostrare un'interfaccia: le MCP Apps. Di solito è il client a decidere come mostrare i risultati di un tool. Le MCP Apps sono un'estensione ufficiale del protocollo che cambia questo: un tool può portarsi dietro un pezzo di interfaccia HTML, che il client mostra dentro la chat. Basta un attributo sul tool, RendersApp, che punta a una AppResource: restituisce una vista Blade, con un URI ui://. Ecco come appare in Claude Desktop. Chiedo «quali workshop ci sono?»: il modello chiama list_workshops, e sotto compare la nostra app con le card dei workshop. Orari, speaker e posti arrivano dal risultato del tool; il form con ruolo e azienda è quello della nostra vista Blade. Clicco Prenota: la pagina chiama book_workshop, i posti scendono di uno. Il secondo workshop è esaurito, quindi il bottone è disattivato: anche questa logica è nostra, non del modello. Il client la mostra in un iframe isolato: niente cookie della nostra app, niente richieste esterne se non le dichiariamo. È lo stesso form di prenotazione che abbiamo visto con A2UI, ma con una differenza importante: con A2UI mandavamo una descrizione, solo dati, e la disegnava la nostra pagina. Qui mandiamo una pagina intera, HTML e JavaScript scritti da noi, che gira dentro il client di qualcun altro. Un dettaglio pratico: con mcp-remote in Claude Desktop va tolto il dominio dedicato, con AppMeta domain false, altrimenti l'app non si vede.</aside>
 </section>

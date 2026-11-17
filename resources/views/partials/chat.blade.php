@@ -50,7 +50,7 @@
         <div class="rounded-xl border border-dashed border-zinc-300 bg-white p-3 text-zinc-500">
             <p class="mb-2 font-medium text-zinc-700">Prova a chiedere:</p>
             <ul class="space-y-1">
-                @foreach ($suggestions ?? ['Quali talk parlano di AI? Mostrameli.', 'Prenotami il workshop sugli agenti.'] as $suggestion)
+                @foreach ($suggestions ?? ['Quali talk parlano di AI? Mostrameli.', 'Prenotami il workshop sugli agenti, sono CTO di Acme.'] as $suggestion)
                     <li>
                         <button type="button" data-suggestion="{{ $suggestion }}" class="text-left transition hover:text-red-600">“{{ $suggestion }}”</button>
                     </li>

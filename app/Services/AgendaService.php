@@ -42,6 +42,12 @@ class AgendaService
      */
     public function add(User $user, Talk $talk): AgendaItem
     {
+        if ($user->agendaItems()->where('talk_id', $talk->id)->exists()) {
+            throw ValidationException::withMessages([
+                'talk_id' => "\"{$talk->title}\" è già nella tua agenda.",
+            ]);
+        }
+
         $overlapping = Talk::where('id', '!=', $talk->id)
             ->whereHas('agendaItems', fn ($items) => $items->where('user_id', $user->id))
             ->where('starts_at', '<', $talk->ends_at)
@@ -54,7 +60,7 @@ class AgendaService
             ]);
         }
 
-        return AgendaItem::firstOrCreate(['user_id' => $user->id, 'talk_id' => $talk->id]);
+        return AgendaItem::create(['user_id' => $user->id, 'talk_id' => $talk->id]);
     }
 
     public function remove(User $user, Talk $talk): void

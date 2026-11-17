@@ -1,13 +1,10 @@
-<x-layouts.app>
+<x-layouts.app back-to-slides>
     <div class="mb-6 flex items-center justify-between gap-4">
         <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-sm text-zinc-500 transition hover:text-zinc-900">
             ← <span class="font-mono text-xs">{{ $stage->step() }}</span> {{ $stage->label() }} <span class="text-zinc-400">· {{ $stage->protocols() }}</span>
         </a>
 
-        <div class="flex items-center gap-4">
-            <button type="button" commandfor="reset-demo" command="show-modal" class="text-xs font-medium text-zinc-500 transition hover:text-red-600">Svuota agenda e prenotazioni</button>
-            <a href="{{ route('slides').session('slides.return', '') }}" class="btn-ghost inline-flex items-center gap-1.5 text-sm">← Torna alle slide</a>
-        </div>
+        <button type="button" commandfor="reset-demo" command="show-modal" class="text-xs font-medium text-zinc-500 transition hover:text-red-600">Svuota agenda e prenotazioni</button>
 
         <dialog id="reset-demo" closedby="any" aria-labelledby="reset-demo-title"
                 class="m-auto w-[calc(100vw-2rem)] max-w-sm rounded-2xl bg-white p-0 shadow-2xl transition duration-200 backdrop:bg-zinc-900/40 backdrop:backdrop-blur-sm starting:open:translate-y-2 starting:open:scale-95 starting:open:opacity-0">
@@ -64,7 +61,13 @@
         </aside>
 
         @if ($stage->agent())
-            @include('partials.chat')
+            @include('partials.chat', $stage === App\Enums\DemoStage::Generative ? [
+                'suggestions' => [
+                    'Quali talk parlano di AI? Mostrameli.',
+                    'Prenotami il workshop sugli agenti, sono CTO di Acme.',
+                    'Come vanno le iscrizioni ai workshop?',
+                ],
+            ] : [])
         @endif
     </div>
 </x-layouts.app>

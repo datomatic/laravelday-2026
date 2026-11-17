@@ -104,15 +104,17 @@ body {
     }
 }
 
-/* A 800s cycle passes three times in a 40-minute talk: parked past the right edge, then a five-second pass along the bottom. */
+/* Parked past the right edge until a slide with data-flyby="car" sends it along the bottom. */
 .supercar {
     position: absolute;
     bottom: 1vh;
     left: 100%;
     height: 16vh;
     aspect-ratio: 3 / 1;
-    animation: supercar-drive 800s linear infinite;
-    animation-delay: -20s;
+}
+
+.supercar.is-passing {
+    animation: supercar-drive 5s linear 1.5s;
 }
 
 .supercar img {
@@ -151,12 +153,11 @@ body {
 }
 
 @keyframes supercar-drive {
-    0%,
-    99.35% {
+    from {
         transform: translateX(0);
     }
 
-    100% {
+    to {
         transform: translateX(calc(-100vw - 100%));
     }
 }
@@ -169,15 +170,17 @@ body {
     pointer-events: none;
 }
 
-/* Same 800s cycle as the car, half a cycle apart: the plane crosses the top, left to right, while the car is parked. */
+/* Parked past the left edge until a slide with data-flyby="plane" sends it across the top. */
 .airplane {
     position: absolute;
     top: 14vh;
     right: 100%;
     height: 18vh;
     aspect-ratio: 1400 / 541;
-    animation: airplane-fly 800s linear infinite;
-    animation-delay: -400s;
+}
+
+.airplane.is-passing {
+    animation: airplane-fly 8s linear 1.5s;
 }
 
 .airplane img {
@@ -188,12 +191,11 @@ body {
 }
 
 @keyframes airplane-fly {
-    0%,
-    99% {
+    from {
         transform: translateX(0);
     }
 
-    100% {
+    to {
         transform: translateX(calc(100vw + 100%));
     }
 }

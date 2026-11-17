@@ -40,3 +40,23 @@ document.querySelectorAll('.reveal section.demo a[href]').forEach((link) => {
         link.href = url;
     });
 });
+
+// The car and the plane cross the screen once, on the slides that ask for them, instead of on a timer:
+// the deck reloads when we come back from a demo, and a timer would start over.
+const flybys = { car: document.querySelector('.supercar'), plane: document.querySelector('.airplane') };
+
+Object.values(flybys).forEach((vehicle) => {
+    vehicle.addEventListener('animationend', (event) => {
+        if (event.target === vehicle) {
+            vehicle.classList.remove('is-passing');
+        }
+    });
+});
+
+Reveal.on('slidechanged', ({ currentSlide }) => {
+    const vehicle = flybys[currentSlide.dataset.flyby];
+
+    if (vehicle && ! vehicle.classList.contains('is-passing')) {
+        vehicle.classList.add('is-passing');
+    }
+});

@@ -1,4 +1,4 @@
-<section data-background-color="#dc2626" class="divider">
+<section data-background-color="#dc2626" class="divider" data-flyby="plane">
     <div class="flex h-full flex-col justify-center gap-10">
         <p class="eyebrow">Porta 1</p>
         <h1>MCP</h1>
@@ -85,7 +85,7 @@ class ConferenceServer extends Server
 </script></code></pre>
         @endverbatim
     </div>
-    <aside class="notes">Una riga in routes/ai.php, con i middleware che già conosciamo: l'autenticazione con Sanctum e il throttle, perché un agente può chiamare un tool cento volte di fila. [clic] Il server è una classe che elenca le sue primitive: prima i tool, le azioni. [clic] Poi le resource, dati che l'utente allega alla conversazione, come il programma della conferenza, e i prompt, richieste pronte che l'utente sceglie dal menu. Li vediamo all'opera nella demo. Noi abbiamo sei tool, ma un client collegato a dieci server ne vede centinaia, e ogni definizione occupa contesto. Alcuni client, come Claude Code, ormai li cercano invece di caricarli tutti. Si può fare anche dal server: ci torniamo dopo le annotazioni.</aside>
+    <aside class="notes">Una riga in routes/ai.php, con i middleware che già conosciamo: l'autenticazione con Sanctum e il throttle, perché un agente può chiamare un tool cento volte di fila. [clic] Il server è una classe che elenca le sue primitive: prima i tool, le azioni. [clic] Poi le resource, dati che l'utente allega alla conversazione, come il programma della conferenza, e i prompt, richieste pronte che l'utente sceglie dal menu. Li vediamo all'opera nella demo. Noi abbiamo sei tool, ma un client collegato a dieci server ne vede centinaia, e ogni definizione occupa contesto. Alcuni client, come Claude Code, ormai li cercano invece di caricarli tutti. Si può fare anche dal server, con ToolSearch: lo trovate tra le cose da guardare a casa.</aside>
 </section>
 
 <section data-background-color="#ffffff" class="code-slide">
@@ -211,41 +211,7 @@ public function handle(Request $request, AgendaService $agenda): Generator
     <aside class="notes">Prima di vedere le nostre, ecco cosa prevede MCP. Le annotazioni sono quattro e in laravel/mcp sono attributi PHP sulla classe del tool. IsReadOnly: il tool legge e non cambia niente. IsDestructive: può cancellare o sovrascrivere dati. IsIdempotent: se lo chiami due volte con gli stessi argomenti, la seconda chiamata non cambia nulla. IsOpenWorld: il tool parla con il mondo esterno, per esempio il web o un'API di terzi, invece di restare dentro l'app. Guardate i default: se non dite niente, il client deve pensare al caso peggiore, cioè un tool che scrive, può distruggere ed esce dall'app. Distruttivo e idempotente contano solo se il tool non è in sola lettura. E sono suggerimenti, non garanzie: il client li usa per decidere quando chiedere conferma, ma la sicurezza vera resta sul server, con policy e validazione. Proprio perché i default sono prudenti, conviene dichiarare anche quello che un tool non fa. add_to_agenda scrive, quindi senza dire niente il client lo considererebbe distruttivo: gli diciamo IsDestructive false. E tutti i nostri tool sono IsOpenWorld false, perché lavorano solo sui dati della nostra app. L'unico distruttivo è clear_agenda, ed è lì che il client dovrebbe chiedere conferma.</aside>
 </section>
 
-<section data-background-color="#ffffff" class="code-slide">
-    <div class="flex h-full flex-col justify-center gap-12">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">Laravel\Mcp\Server\Tools\ToolSearch</p>
-            <h2>Troppi tool? Li cerca il modello</h2>
-        </div>
-        <div class="flex items-center gap-16">
-            <div class="w-[900px] shrink-0">
-                @verbatim
-                <pre><code class="language-php" data-trim data-line-numbers="1-4|5-10"><script type="text/template">
-protected array $tools = [
-    SearchTalksTool::class,
-    AddToAgendaTool::class,
-
-    ToolSearch::class => [
-        ShowAgendaTool::class,
-        ClearAgendaTool::class,
-        ListWorkshopsTool::class,
-        BookWorkshopTool::class,
-    ],
-];
-</script></code></pre>
-                @endverbatim
-    </div>
-            <div class="flex flex-col gap-8 text-[32px]">
-                <p class="fragment">Il client vede solo <code>search_tools</code> ed <code>execute_tools</code>.</p>
-                <p class="fragment">La ricerca pesa nome, descrizione e schema.</p>
-                <p class="fragment font-semibold text-red-700">Le annotazioni dei tool nel catalogo non arrivano al client.</p>
-            </div>
-        </div>
-    </div>
-    <aside class="notes">Torniamo al problema dei tanti tool: laravel/mcp ha una soluzione lato server. Nell'array dei tool lasciamo fuori quelli che servono sempre. [clic] Gli altri li mettiamo sotto la chiave ToolSearch. [clic] Il client non vede più quei tool: vede due tool generici, search_tools per cercare nel catalogo ed execute_tools per chiamarli. Il modello cerca, riceve nome, descrizione e schema dei tool trovati, poi li esegue. [clic] La ricerca è per parole: il nome conta di più, poi la descrizione, poi lo schema. Ancora una volta, nome e descrizione sono quello che il modello vede. [clic] Il prezzo: per il client esiste solo execute_tools, quindi le annotazioni dei singoli tool non le vede. Se nel catalogo c'è clear_agenda, il client non sa che è distruttivo. Nella demo non lo usiamo, abbiamo solo sei tool. Ha senso quando sono decine, e i tool rischiosi è meglio lasciarli fuori dal catalogo.</aside>
-</section>
-
-<section>
+<section data-flyby="car">
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">Autenticazione</p>
@@ -323,7 +289,8 @@ protected array $tools = [
                 <p class="muted text-[30px]">Due tool, <code>describe_database</code> e <code>query_database</code>: l'assistente esplora tabelle e relazioni e legge i dati.</p>
                 <ul class="flex flex-col gap-3 text-[28px]">
                     <li>Solo lettura, mai SQL</li>
-                    <li>Dati sensibili esclusi o mascherati</li>
+                    <li>Dati sensibili esclusi, quelli personali anonimizzati</li>
+                    <li>Multi-tenant: ogni query filtrata sul tenant corrente</li>
                     <li>Descrizioni per tabelle e colonne</li>
                     <li>Audit log di ogni chiamata</li>
                 </ul>
@@ -340,16 +307,16 @@ protected array $tools = [
             </div>
         </div>
     </div>
-    <aside class="notes">Due esempi da progetti veri. [clic] Il primo è un pacchetto open source: laravel-database-mcp. Dà a Claude Code o a Cursor due tool, uno per descrivere il database e uno per leggerlo. Lo uso per rispondere a domande sui dati senza scrivere query a mano: quanti ordini questa settimana, quali clienti non hanno mai comprato. Il modello non scrive SQL: passa parametri strutturati, e il pacchetto esegue solo query di lettura. I dati sensibili, come token e password, sono esclusi; quelli personali si possono mascherare, per esempio l'email, così il modello può contare i record senza leggere il valore vero. Si possono descrivere tabelle e colonne, per esempio «il fatturato è la somma delle fatture pagate», e il modello trova da solo la query giusta. E ogni chiamata finisce in un audit log. [clic] Il secondo è un e-commerce. C'erano lavori ripetitivi sul catalogo: riscrivere e tradurre le descrizioni dei prodotti, caricare le immagini e associarle, scegliere i prodotti suggeriti. Invece di fare un pannello apposta, abbiamo esposto come tool le action che già usava il backoffice. Chi gestisce il catalogo lo chiede a Claude: "riscrivi le descrizioni della categoria scarpe e suggerisci tre prodotti abbinati per ognuna", controlla la proposta e conferma. Stessa idea del talk: la logica c'era già, abbiamo aperto una porta in più.</aside>
+    <aside class="notes">Due esempi da progetti veri. [clic] Il primo è un pacchetto open source: laravel-database-mcp. Dà a Claude Code o a Cursor due tool, uno per descrivere il database e uno per leggerlo. Lo uso per rispondere a domande sui dati senza scrivere query a mano: quanti ordini questa settimana, quali clienti non hanno mai comprato. Il modello non scrive SQL: passa parametri strutturati, e il pacchetto esegue solo query di lettura. I dati sensibili, come token e password, sono esclusi. Quelli personali si possono anonimizzare: l'email diventa uno pseudonimo stabile, sempre lo stesso per lo stesso valore, così il modello può contare e incrociare i record senza mai leggere il dato vero. E funziona anche nelle app multi-tenant con un solo database: si dice quale colonna identifica il tenant, e ogni query viene filtrata sul tenant dell'utente collegato, anche nelle join. Il modello non può uscire dai dati del suo cliente, perché il filtro lo aggiunge il pacchetto, non il modello. Si possono descrivere tabelle e colonne, per esempio «il fatturato è la somma delle fatture pagate», e il modello trova da solo la query giusta. E ogni chiamata finisce in un audit log. [clic] Il secondo è un e-commerce. C'erano lavori ripetitivi sul catalogo: riscrivere e tradurre le descrizioni dei prodotti, caricare le immagini e associarle, scegliere i prodotti suggeriti. Invece di fare un pannello apposta, abbiamo esposto come tool le action che già usava il backoffice. Chi gestisce il catalogo lo chiede a Claude: "riscrivi le descrizioni della categoria scarpe e suggerisci tre prodotti abbinati per ognuna", controlla la proposta e conferma. Stessa idea del talk: la logica c'era già, abbiamo aperto una porta in più.</aside>
 </section>
 
 <section>
     <div class="flex h-full flex-col gap-10">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">MCP · Non ne ho parlato</p>
-            <h2>Tre cose da guardare a casa</h2>
+            <h2>Quattro cose da guardare a casa</h2>
         </div>
-        <div class="flex flex-col gap-6">
+        <div class="grid grid-cols-2 gap-8">
             <div class="card fragment flex flex-col gap-4">
                 <div class="flex items-baseline gap-6">
                     <p class="font-mono text-[28px] text-red-600">Mcp::client()</p>
@@ -364,7 +331,7 @@ protected array $tools = [
                     <h3>Testare i tool</h3>
                 </div>
                 <p class="muted text-[30px]">Si chiama il tool dal server, senza HTTP e senza client.</p>
-                <p class="text-[26px]"><code>ConferenceServer::tool(SearchTalksTool::class, […])->assertSee(…)</code></p>
+                <p class="text-[22px]"><code class="whitespace-nowrap">ConferenceServer::tool(SearchTalksTool::class, […])->assertSee(…)</code></p>
             </div>
             <div class="card fragment flex flex-col gap-4">
                 <div class="flex items-baseline gap-6">
@@ -374,7 +341,15 @@ protected array $tools = [
                 <p class="muted text-[30px]">Un'interfaccia web per elencare e chiamare tool, resource e prompt.</p>
                 <p class="text-[26px]"><code>php artisan mcp:inspector mcp/conference</code></p>
             </div>
+            <div class="card fragment flex flex-col gap-4">
+                <div class="flex items-baseline gap-6">
+                    <p class="font-mono text-[28px] text-red-600">ToolSearch</p>
+                    <h3>Troppi tool</h3>
+                </div>
+                <p class="muted text-[30px]">Il client vede solo <code>search_tools</code> ed <code>execute_tools</code>: il modello cerca i tool che gli servono invece di caricarli tutti.</p>
+                <p class="text-[26px]"><code>ToolSearch::class => [ShowAgendaTool::class, …]</code></p>
+            </div>
         </div>
     </div>
-    <aside class="notes">Tre cose di MCP che non ho fatto in tempo a mostrare. [clic] laravel/mcp non è solo un server, è anche un client. Si registra un server esterno in config/mcp.php, con un URL o un comando locale, e da Mcp::client si elencano i tool e si chiamano con callTool. Così la nostra app può usare i tool di un altro servizio, per esempio GitHub o un server interno dell'azienda. [clic] I test. Ogni server ha dei metodi statici, tool, resource e prompt, che chiamano la primitiva direttamente, senza HTTP e senza client. Poi si fanno le asserzioni come su una risposta HTTP: assertOk, assertSee, assertHasErrors. Con actingAs si sceglie l'utente. Tutti i tool di questa demo hanno i loro test Pest. [clic] Per provarlo a mano c'è MCP Inspector, il client di debug ufficiale. Il comando artisan lo avvia già collegato al nostro server: si vedono i tool, si chiamano con i parametri che vogliamo e si leggono le risposte JSON. Attenzione: se il server è protetto, va passato il token nell'header Authorization, altrimenti l'Inspector prova a fare il login OAuth e fallisce. E con questo chiudiamo MCP: l'agente è nel client di qualcun altro. Ora lo portiamo dentro la nostra app, con AG-UI.</aside>
+    <aside class="notes">Quattro cose di MCP che non ho fatto in tempo a mostrare. [clic] laravel/mcp non è solo un server, è anche un client. Si registra un server esterno in config/mcp.php, con un URL o un comando locale, e da Mcp::client si elencano i tool e si chiamano con callTool. Così la nostra app può usare i tool di un altro servizio, per esempio GitHub o un server interno dell'azienda. [clic] I test. Ogni server ha dei metodi statici, tool, resource e prompt, che chiamano la primitiva direttamente, senza HTTP e senza client. Poi si fanno le asserzioni come su una risposta HTTP: assertOk, assertSee, assertHasErrors. Con actingAs si sceglie l'utente. Tutti i tool di questa demo hanno i loro test Pest. [clic] Per provarlo a mano c'è MCP Inspector, il client di debug ufficiale. Il comando artisan lo avvia già collegato al nostro server: si vedono i tool, si chiamano con i parametri che vogliamo e si leggono le risposte JSON. Attenzione: se il server è protetto, va passato il token nell'header Authorization, altrimenti l'Inspector prova a fare il login OAuth e fallisce. [clic] E se i tool diventano decine, ToolSearch: nell'array dei tool si mettono sotto la chiave ToolSearch quelli che non servono sempre. Il client vede solo due tool, search_tools per cercare nel catalogo ed execute_tools per chiamarli, e il modello carica solo quello che gli serve. Il prezzo: le annotazioni dei tool nel catalogo non arrivano al client, quindi i tool rischiosi è meglio lasciarli fuori. E con questo chiudiamo MCP: l'agente è nel client di qualcun altro. Ora lo portiamo dentro la nostra app, con AG-UI.</aside>
 </section>

@@ -4,14 +4,72 @@
         <h1>AG-UI</h1>
         <p class="text-[48px]">Un agente dentro l'app, in streaming.</p>
     </div>
-    <aside class="notes">La seconda porta: AG-UI. Ora l'agente lo portiamo dentro la nostra app, nella nostra pagina, per i nostri utenti.</aside>
+    <aside class="notes">La seconda porta: AG-UI. Ora l'agente lo portiamo dentro la nostra app, nella nostra pagina, per i nostri utenti. Prima però facciamolo come l'abbiamo fatto tutti la prima volta.</aside>
+</section>
+
+<section>
+    <div class="flex h-full flex-col justify-center gap-14">
+        <div class="flex flex-col gap-6">
+            <p class="eyebrow">Dentro la nostra pagina</p>
+            <h2>Molti hanno aggiunto una chat alla pagina</h2>
+        </div>
+        <div class="flex items-center gap-8 text-[34px]">
+            <div class="card flex-1">
+                <h3>La chat</h3>
+                <p class="muted mt-4 text-[30px]">Un riquadro nella pagina dove l'utente scrive.</p>
+            </div>
+            <p class="text-[64px] text-red-600">→</p>
+            <div class="card fragment flex-1" data-fragment-index="0">
+                <h3>Il modello</h3>
+                <p class="muted mt-4 text-[30px]">Capisce la richiesta e decide quale tool chiamare.</p>
+            </div>
+            <p class="fragment text-[64px] text-red-600" data-fragment-index="1">→</p>
+            <div class="card fragment flex-1" data-fragment-index="1">
+                <h3>I tool</h3>
+                <p class="muted mt-4 text-[30px]">Gli stessi del server MCP: cerca, aggiungi, prenota.</p>
+            </div>
+        </div>
+    </div>
+    <aside class="notes">Con MCP l'agente sta nel client dell'utente. Ma spesso lo vogliamo nella nostra pagina, per tutti i nostri utenti. Nell'ultimo anno in molti abbiamo aggiunto una chat, e il pattern è sempre lo stesso. Un riquadro nella pagina dove l'utente scrive. [clic] Il messaggio va a un modello, che capisce la richiesta e decide cosa fare. [clic] E per fare qualcosa davvero chiama dei tool: gli stessi che abbiamo appena scritto per il server MCP, cerca un talk, aggiungilo all'agenda, prenota un workshop. Vediamolo nella demo, fatto come lo faremmo tutti la prima volta.</aside>
+</section>
+
+<section data-background-color="#18181b" class="demo">
+    <div class="flex h-full flex-col justify-center gap-10">
+        <p class="eyebrow">Demo · Passaggio {{ App\Enums\DemoStage::HomemadeChat->step() }}</p>
+        <h2>{{ App\Enums\DemoStage::HomemadeChat->label() }}</h2>
+        <p class="text-[40px] text-zinc-300">«Quali talk parlano di AI? Aggiungi il primo alla mia agenda»</p>
+        <p class="text-[32px]"><a href="{{ App\Enums\DemoStage::HomemadeChat->url() }}">Apri la chat fatta in casa →</a></p>
+    </div>
+    <aside class="notes">Mostrare la chat che chiama i tool, gli stessi del server MCP, e l'agenda che si aggiorna. Poi chiedere di prenotare un workshop: la conferma la chiede il modello, a testo. Dietro c'è un SSE inventato da noi.</aside>
+</section>
+
+<section data-flyby="plane">
+    <div class="flex h-full flex-col justify-center gap-12">
+        <div class="flex flex-col gap-6">
+            <p class="eyebrow">Dopo la demo</p>
+            <h2>Funziona, ma è tutto fatto in casa</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-8">
+            <div class="card fragment flex flex-col gap-4">
+                <p class="font-mono text-[28px] text-red-600">✕ Streaming e interfaccia</p>
+                <h3>Solo testo, a pezzi, in un formato che conosciamo solo noi</h3>
+                <p class="muted text-[28px]"><code>event: text</code> l'abbiamo inventato: senza id, con un parser scritto a mano, e un altro client non lo sa leggere. Per una scheda, un modulo o un grafico dovremmo inventare un altro formato, e un altro renderer.</p>
+            </div>
+            <div class="card fragment flex flex-col gap-4">
+                <p class="font-mono text-[28px] text-red-600">✕ Approvazione delle azioni</p>
+                <h3>Il modello capisce cosa vogliamo solo interpretando il nostro testo</h3>
+                <p class="muted text-[28px]">La conferma la chiede lui, a parole. Se capisce male o se ne dimentica, prenota lo stesso: il nostro server non ha modo di fermarsi.</p>
+            </div>
+        </div>
+    </div>
+    <aside class="notes">Funziona, ma guardiamo cosa abbiamo dovuto inventare. [clic] Lo streaming e l'interfaccia: nel pannello eventi si vedeva il nostro formato, event: text, pezzi di testo senza id. L'abbiamo inventato noi, con un parser scritto a mano, e nessun altro client lo sa leggere. Ed è solo testo: per una scheda o un grafico dovremmo inventare un altro formato e un altro renderer. [clic] L'approvazione: la conferma la chiede il modello, a parole. Se capisce male o se ne dimentica, prenota lo stesso, perché il server non ha modo di mettere in pausa il run. Ogni app reinventa le stesse cose. I tool ce li dava già MCP; per il resto ci sono altri due standard: AG-UI per streaming e approvazioni, A2UI per l'interfaccia. Cominciamo da AG-UI.</aside>
 </section>
 
 <section>
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">Agent-User Interaction Protocol</p>
-            <h2>Un flusso di eventi tra agente e pagina</h2>
+            <h2>AG-UI: un flusso di eventi tra agente e pagina</h2>
         </div>
         <table class="w-full text-left text-[30px]">
             <thead class="font-mono text-[24px] text-zinc-500">
@@ -64,40 +122,76 @@ protected function tools(): array
         @endverbatim
         <p class="muted text-[34px]"><code>McpTool</code>: una ventina di righe che leggono nome, descrizione e schema del tool MCP e ne chiamano <code>handle()</code> in-process.</p>
     </div>
-    <aside class="notes">L'agente della chat non ha tool suoi: usa le stesse classi del server MCP. [clic] McpTool le adatta per neuron-ai e le esegue direttamente, senza HTTP: stessa validazione, stesso service. [clic] In più c'è una cosa che MCP non ha: withApprovalPolicy. Prenotare e svuotare l'agenda chiedono conferma all'utente, e la stringa è il motivo che la pagina mostra.</aside>
+    <aside class="notes">Come nella chat fatta in casa, l'agente non ha tool suoi: usa le stesse classi del server MCP. Vediamo come. [clic] McpTool le adatta per neuron-ai e le esegue direttamente, senza HTTP: stessa validazione, stesso service. [clic] In più c'è una cosa che MCP non ha: withApprovalPolicy. Prenotare e svuotare l'agenda chiedono conferma all'utente, e la stringa è il motivo che la pagina mostra.</aside>
 </section>
 
 <section data-background-color="#ffffff" class="code-slide">
-    <div class="flex h-full flex-col gap-12">
+    <div class="flex h-full flex-col justify-center gap-12">
+        <div class="flex flex-col gap-6">
+            <p class="eyebrow">Human in the loop</p>
+            <h2>La conferma la impone il server, non il modello</h2>
+        </div>
+        <div class="grid grid-cols-[1fr_120px_1fr] items-center gap-x-6 gap-y-8 text-[30px]">
+            <p class="eyebrow text-center">Server</p>
+            <span></span>
+            <p class="eyebrow text-center">Browser</p>
+
+            <div class="card fragment flex flex-col gap-2" data-fragment-index="0">
+                <p><b>Run 1</b> · il modello chiama <code>book_workshop</code></p>
+                <p class="muted text-[26px]">Il tool <b>non</b> parte: neuron-ai salva il run e si ferma.</p>
+            </div>
+            <p class="fragment text-center text-[56px] text-red-600" data-fragment-index="0">→</p>
+            <div class="card fragment flex flex-col gap-2" data-fragment-index="0">
+                <p><code>RUN_FINISHED</code> con <b>interrupt</b></p>
+                <p class="muted text-[26px]">La pagina mostra il motivo e Approva / Rifiuta.</p>
+            </div>
+
+            <div class="card fragment flex flex-col gap-2" data-fragment-index="1">
+                <p><b>Run 2</b> · riparte da dove si era fermato</p>
+                <p class="muted text-[26px]">Approvato: il tool viene eseguito. Rifiutato: no.</p>
+            </div>
+            <p class="fragment text-center text-[56px] text-red-600" data-fragment-index="1">←</p>
+            <div class="card fragment flex flex-col gap-2" data-fragment-index="1">
+                <p>clic → nuova richiesta con <code>resume</code></p>
+                <p class="muted text-[26px]">Due richieste HTTP, il run in pausa sta sul server.</p>
+            </div>
+        </div>
+    </div>
+    <aside class="notes">Nella chat fatta in casa la conferma la chiedeva il modello a parole: poteva saltarla o farsela togliere con un prompt. Qui la impone il server. [clic] Il modello vuole prenotare. Il tool ha la approval policy: neuron-ai non lo esegue, mette il run in pausa e chiude lo stream con RUN_FINISHED e un interrupt. La pagina mostra Approva e Rifiuta. [clic] Al clic il client fa una seconda richiesta con resume e la decisione: il run riparte da dove era, e il tool parte solo se l'utente ha approvato. Sono due richieste HTTP distinte, nel mezzo il run aspetta sul server. Il motivo che la pagina mostra è la stringa che abbiamo scritto in withApprovalPolicy.</aside>
+</section>
+
+<section data-background-color="#ffffff" class="code-slide">
+    <div class="flex h-full flex-col justify-center gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">AgentController · POST /agent/{stage}</p>
             <h2>L'endpoint è un controller</h2>
         </div>
         @verbatim
-        <pre class="code-compact"><code class="language-php" data-trim data-line-numbers="1-2|4-6|8"><script type="text/template">
-$adapter = new AGUIAdapter($request->threadId(), $request->input('runId'), $request->input('messages'));
-$agent = app($stage->agent())->for($request->threadId())->setStreamAdapter(fn () => $adapter);
+        <pre><code class="language-php" data-trim data-line-numbers="1|3-5|7"><script type="text/template">
+$agent = ConferenceAssistant::make()->setStreamAdapter(new AGUIAdapter(…));
 
 $events = $request->isResume()
-    ? $agent->submitInputs($request->all(), new AGUIInputTranslator)->events()
-    : $agent->stream(new UserMessage($request->prompt()));
+    ? $agent->submitInputs(…)   // risposta a una conferma
+    : $agent->stream(…);        // nuovo messaggio
 
-return response()->stream(fn () => yield from SSEEncoder::encode($events), 200, $adapter->getHeaders());
+return response()->stream(fn () => yield from SSEEncoder::encode($events));
 </script></code></pre>
         @endverbatim
-        <p class="muted text-[34px]">La cronologia sta sul server: il thread appartiene all'utente, altrimenti 403.</p>
+        <p class="muted text-[34px]">Semplificato: il codice completo è nel repo.</p>
     </div>
-    <aside class="notes">Lato server basta un controller. L'adapter di neuron-ai trasforma quello che fa l'agente in eventi AG-UI. [clic] Due casi: un nuovo messaggio fa partire l'agente, una risposta a una conferma riprende il run che era in pausa. [clic] E la risposta è uno stream di Laravel: ogni evento parte verso il browser appena succede.</aside>
+    <aside class="notes">Lato server basta un controller, qui semplificato. L'adapter di neuron-ai trasforma quello che fa l'agente in eventi AG-UI. La cronologia della conversazione sta sul server, legata all'utente. [clic] I due casi che abbiamo appena visto: un nuovo messaggio fa partire l'agente, la risposta a una conferma riprende il run che era in pausa. [clic] E la risposta è uno stream di Laravel: ogni evento parte verso il browser appena succede.</aside>
 </section>
 
 <section data-background-color="#ffffff" class="code-slide">
-    <div class="flex h-full flex-col gap-12">
+    <div class="flex h-full flex-col justify-center gap-12">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">resources/js/chat.js</p>
             <h2>Il client si iscrive agli eventi</h2>
         </div>
-        @verbatim
-        <pre><code class="language-js" data-trim data-line-numbers="1-4|6-9|10-12"><script type="text/template">
+        <div class="flex items-center gap-16">
+            <div class="w-[960px] shrink-0">
+                @verbatim
+                <pre><code class="language-js" data-trim data-line-numbers="1-4|6-9|10-12" data-fragment-index="0"><script type="text/template">
 const agent = new HttpAgent({
     url: chat.dataset.agentUrl,
     threadId: chat.dataset.threadId,
@@ -112,33 +206,32 @@ await agent.runAgent(parameters, {
     },
 });
 </script></code></pre>
-        @endverbatim
-    </div>
-    <aside class="notes">Lato browser niente React: Blade e un file JavaScript. HttpAgent di @ag-ui/client fa la richiesta e legge gli eventi. [clic] Per ogni evento scriviamo un metodo: qui il testo, che accodiamo alla bolla della chat. [clic] E quando un tool cambia i dati, ricarichiamo agenda e posti dei workshop. Nella demo il pannello Eventi AG-UI mostra lo stesso flusso in diretta.</aside>
-</section>
-
-<section>
-    <div class="flex h-full flex-col gap-12">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">Human in the loop</p>
-            <h2>Le azioni che contano chiedono conferma</h2>
+                @endverbatim
+            </div>
+            <ol class="flex flex-col gap-10 text-[32px]">
+                <li class="flex flex-col gap-2">
+                    <p><b>1. Dove e quale chat</b></p>
+                    <p class="muted text-[28px]">La rotta <code>POST /agent/{stage}</code> e il thread della conversazione.</p>
+                </li>
+                <li class="fragment flex flex-col gap-2" data-fragment-index="0">
+                    <p><b>2. Arriva un pezzo di testo</b></p>
+                    <p class="muted text-[28px]"><code>TEXT_MESSAGE_CONTENT</code> → lo accodo alla bolla della chat.</p>
+                </li>
+                <li class="fragment flex flex-col gap-2" data-fragment-index="1">
+                    <p><b>3. Un tool ha finito</b></p>
+                    <p class="muted text-[28px]"><code>TOOL_CALL_RESULT</code> → ricarico agenda e posti dei workshop.</p>
+                </li>
+            </ol>
         </div>
-        <ol class="flex flex-col gap-6 text-[36px]">
-            <li class="fragment">Il modello vuole chiamare <code>book_workshop</code></li>
-            <li class="fragment">neuron-ai si ferma, salva il run e chiude con un <b>interrupt</b></li>
-            <li class="fragment">La pagina mostra il motivo e i pulsanti Approva / Rifiuta</li>
-            <li class="fragment">Il client rilancia il run con <code>resume</code> e la decisione</li>
-            <li class="fragment">Il run riparte da dove si era fermato</li>
-        </ol>
     </div>
-    <aside class="notes">[clic] Il modello vuole prenotare. [clic] Il tool ha la approval policy: neuron-ai non lo esegue, mette il run in pausa e chiude lo stream con un interrupt. [clic] La pagina mostra Approva e Rifiuta. [clic] Al clic, il client rilancia il run con la decisione. [clic] Il run riparte da dove era: se l'utente ha approvato il tool viene eseguito, altrimenti no. Nella chat fatta in casa la conferma la chiedeva il modello a parole, qui la impone il server.</aside>
+    <aside class="notes">Lato browser niente React: Blade e un file JavaScript. HttpAgent di @ag-ui/client fa la richiesta al nostro controller e legge gli eventi. Gli diciamo solo dove chiamare e quale conversazione continuare. [clic] Poi, per ogni tipo di evento che ci interessa, scriviamo un metodo. Il testo arriva a pezzi, e ogni pezzo lo accodiamo alla bolla della chat: per questo la risposta si scrive mentre la leggete. [clic] Quando un tool finisce, per esempio dopo una prenotazione, ricarichiamo agenda e posti dei workshop: la pagina si aggiorna da sola. Gli eventi che non ci interessano li ignoriamo. Nella demo il pannello Eventi AG-UI mostra lo stesso flusso in diretta.</aside>
 </section>
 
 <section data-background-color="#18181b" class="demo">
     <div class="flex h-full flex-col justify-center gap-10">
         <p class="eyebrow">Demo · Passaggio {{ App\Enums\DemoStage::TextChat->step() }}</p>
         <h2>{{ App\Enums\DemoStage::TextChat->label() }}</h2>
-        <p class="text-[40px] text-zinc-300">«Prenotami il workshop sugli agenti»</p>
+        <p class="text-[40px] text-zinc-300">«Prenotami il workshop sugli agenti, sono CTO di Acme»</p>
         <p class="text-[32px]"><a href="{{ App\Enums\DemoStage::TextChat->url() }}">Apri la chat agentica →</a></p>
     </div>
     <aside class="notes">Aprire il pannello eventi. Una ricerca, un'aggiunta, una prenotazione approvata e una rifiutata. Nel pannello far vedere RUN_FINISHED con l'interrupt, e il nuovo run che parte dopo il clic su Approva.</aside>

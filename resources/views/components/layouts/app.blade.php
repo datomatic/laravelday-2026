@@ -1,3 +1,5 @@
+@props(['backToSlides' => false])
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -19,16 +21,23 @@
                 <img src="{{ asset('images/laravelday-logo.svg') }}" alt="laravelday" class="h-9 w-auto">
                 <span class="hidden border-l border-zinc-200 pl-3 text-xs text-zinc-500 sm:block">Programma della conferenza</span>
             </a>
-            @auth
-                <form method="POST" action="{{ route('logout') }}" class="flex items-center gap-3 text-sm">
-                    @csrf
-                    <span class="hidden items-center gap-2 text-zinc-600 sm:flex">
-                        <span class="grid size-8 place-items-center rounded-full bg-zinc-900 text-xs font-semibold text-white">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
-                        {{ auth()->user()->name }}
-                    </span>
-                    <button class="btn-ghost">Esci</button>
-                </form>
-            @endauth
+            <div class="flex items-center gap-4">
+                @if ($backToSlides)
+                    <a href="{{ route('slides').session('slides.return', '') }}" class="btn-ghost inline-flex items-center gap-1.5 text-sm">← Torna alle slide</a>
+                @else
+                    <a href="{{ route('slides') }}" class="btn-ghost text-sm">Slide del talk</a>
+                @endif
+                @auth
+                    <form method="POST" action="{{ route('logout') }}" class="flex items-center gap-3 text-sm">
+                        @csrf
+                        <span class="hidden items-center gap-2 text-zinc-600 sm:flex">
+                            <span class="grid size-8 place-items-center rounded-full bg-zinc-900 text-xs font-semibold text-white">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
+                            {{ auth()->user()->name }}
+                        </span>
+                        <button class="btn-ghost">Esci</button>
+                    </form>
+                @endauth
+            </div>
         </div>
     </header>
 

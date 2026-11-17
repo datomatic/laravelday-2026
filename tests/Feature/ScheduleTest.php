@@ -41,7 +41,19 @@ test('a user can add a talk to the agenda', function () {
     $talk = Talk::factory()->create();
 
     $this->actingAs($user)->post(route('agenda.store'), ['talk_id' => $talk->id])->assertRedirect();
-    $this->actingAs($user)->postJson(route('agenda.store'), ['talk_id' => $talk->id])->assertCreated();
+
+    expect($user->agendaItems()->where('talk_id', $talk->id)->count())->toBe(1);
+});
+
+test('a talk already in the agenda cannot be added again', function () {
+    $user = User::factory()->create();
+    $talk = Talk::factory()->create();
+    AgendaItem::factory()->for($user)->for($talk)->create();
+
+    $this->actingAs($user)
+        ->postJson(route('agenda.store'), ['talk_id' => $talk->id])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('talk_id');
 
     expect($user->agendaItems()->where('talk_id', $talk->id)->count())->toBe(1);
 });
@@ -141,13 +153,13 @@ test('the reset button asks for confirmation in a dialog before deleting', funct
         ->assertDontSee('confirm(', false);
 });
 
-test('a user can book a workshop once with role and company', function () {
+test('a user can book a workshop with role and company', function () {
     $user = User::factory()->create();
     $workshop = Workshop::factory()->create();
-    $details = ['company_role' => CompanyRole::TechLead->value, 'company_name' => 'Acme'];
 
-    $this->actingAs($user)->post(route('workshops.bookings.store', $workshop), $details)->assertRedirect();
-    $this->actingAs($user)->postJson(route('workshops.bookings.store', $workshop), $details)->assertCreated();
+    $this->actingAs($user)
+        ->post(route('workshops.bookings.store', $workshop), ['company_role' => CompanyRole::TechLead->value, 'company_name' => 'Acme'])
+        ->assertRedirect();
 
     $booking = WorkshopBooking::where('user_id', $user->id)->sole();
 
@@ -167,6 +179,19 @@ test('booking a workshop requires a valid role and the company name', function (
         ->assertSessionHasInput('company_role', 'astronaut');
 
     expect(WorkshopBooking::count())->toBe(0);
+});
+
+test('a user cannot book the same workshop twice', function () {
+    $user = User::factory()->create();
+    $workshop = Workshop::factory()->create();
+    WorkshopBooking::factory()->for($workshop)->for($user)->create();
+
+    $this->actingAs($user)
+        ->postJson(route('workshops.bookings.store', $workshop), ['company_role' => CompanyRole::Cto->value, 'company_name' => 'Acme'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('workshop_id');
+
+    expect(WorkshopBooking::where('user_id', $user->id)->count())->toBe(1);
 });
 
 test('a full workshop cannot be booked', function () {

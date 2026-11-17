@@ -10,7 +10,7 @@
     <aside class="notes">Benvenuti. Le domande alla fine.</aside>
 </section>
 
-<section>
+<section data-flyby="car">
     <div class="flex h-full items-center justify-between gap-24">
         <div class="flex flex-1 flex-col gap-10">
             <p class="eyebrow">Chi sono</p>
@@ -36,17 +36,9 @@
     <div class="flex h-full flex-col justify-center gap-12">
         <p class="eyebrow">Oggi vedremo</p>
         <h2 class="max-w-[1600px] text-[96px]!">Come modernizzare un'app Laravel standard nell'era dell'IA agentica</h2>
-        <p class="muted max-w-[1500px] text-[40px]">Partiamo da un'app come tante e la apriamo agli agenti un passo alla volta, senza riscrivere la logica che c'è già.</p>
+        <p class="muted max-w-[1500px] text-[40px]">Partiamo da un'app come tante, con una porta sola: l'interfaccia web. La apriamo agli agenti un passo alla volta, senza riscrivere la logica che c'è già.</p>
     </div>
-    <aside class="notes">La mappa del talk: cinque passaggi della stessa demo, poi un accenno a WebMCP. I primi quattro aggiungono un protocollo alla volta; l'ultimo lascia al modello anche la scelta dell'interfaccia.</aside>
-</section>
-
-<section>
-    <div class="flex h-full flex-col justify-center gap-12">
-        <p class="eyebrow">Fino a ieri</p>
-        <h2 class="max-w-[1500px] text-[96px]!">La nostra app aveva una porta sola: l'interfaccia web.</h2>
-    </div>
-    <aside class="notes">Una persona, un browser, form e bottoni. Abbiamo progettato tutto attorno a questo.</aside>
+    <aside class="notes">Fino a ieri le nostre app avevano una porta sola: una persona, un browser, form e bottoni. Abbiamo progettato tutto attorno a questo. Oggi le apriamo agli agenti. La mappa del talk: cinque passaggi della stessa demo, poi un accenno a WebMCP. I primi quattro aggiungono un protocollo alla volta; l'ultimo lascia al modello anche la scelta dell'interfaccia.</aside>
 </section>
 
 <section>
@@ -88,96 +80,6 @@
 </section>
 
 <section>
-    <div class="flex h-full flex-col justify-center gap-14">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">Nell'ultimo anno</p>
-            <h2>Molti hanno aggiunto una chat alla pagina</h2>
-        </div>
-        <div class="flex items-center gap-8 text-[34px]">
-            <div class="card flex-1">
-                <h3>La chat</h3>
-                <p class="muted mt-4 text-[30px]">Un riquadro nella pagina dove l'utente scrive.</p>
-            </div>
-            <p class="text-[64px] text-red-600">→</p>
-            <div class="card fragment flex-1" data-fragment-index="0">
-                <h3>Il modello</h3>
-                <p class="muted mt-4 text-[30px]">Capisce la richiesta e decide quale tool chiamare.</p>
-            </div>
-            <p class="fragment text-[64px] text-red-600" data-fragment-index="1">→</p>
-            <div class="card fragment flex-1" data-fragment-index="1">
-                <h3>I tool</h3>
-                <p class="muted mt-4 text-[30px]">Funzioni della nostra app: cerca, aggiungi, prenota.</p>
-            </div>
-        </div>
-    </div>
-    <aside class="notes">Nell'ultimo anno in molti abbiamo aggiunto una chat alle nostre app, e il pattern è sempre lo stesso. Un riquadro nella pagina dove l'utente scrive. [clic] Il messaggio va a un modello, che capisce la richiesta e decide cosa fare. [clic] E per fare qualcosa davvero chiama dei tool: funzioni della nostra app, cerca un talk, aggiungilo all'agenda, prenota un workshop. Vediamolo nella demo, fatto come lo faremmo tutti la prima volta.</aside>
-</section>
-
-<section data-background-color="#18181b" class="demo">
-    <div class="flex h-full flex-col justify-center gap-10">
-        <p class="eyebrow">Demo · Passaggio {{ App\Enums\DemoStage::HomemadeChat->step() }}</p>
-        <h2>{{ App\Enums\DemoStage::HomemadeChat->label() }}</h2>
-        <p class="text-[40px] text-zinc-300">«Quali talk parlano di AI? Aggiungi il primo alla mia agenda»</p>
-        <p class="text-[32px]"><a href="{{ App\Enums\DemoStage::HomemadeChat->url() }}">Apri la chat fatta in casa →</a></p>
-    </div>
-    <aside class="notes">Mostrare la chat che chiama i tool e l'agenda che si aggiorna. Poi chiedere di prenotare un workshop: la conferma la chiede il modello, a testo. Dietro c'è un SSE inventato da noi.</aside>
-</section>
-
-<section>
-    <div class="flex h-full flex-col justify-center gap-12">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">Dopo la demo</p>
-            <h2>Funziona, ma è tutto fatto in casa</h2>
-        </div>
-        <div class="grid grid-cols-2 gap-8">
-            <div class="card fragment flex flex-col gap-4">
-                <p class="font-mono text-[28px] text-red-600">✕ Streaming e interfaccia</p>
-                <h3>Solo testo, a pezzi, in un formato che conosciamo solo noi</h3>
-                <p class="muted text-[28px]"><code>event: text</code> l'abbiamo inventato: senza id, con un parser scritto a mano, e un altro client non lo sa leggere. Per una scheda, un modulo o un grafico dovremmo inventare un altro formato, e un altro renderer.</p>
-            </div>
-            <div class="card fragment flex flex-col gap-4">
-                <p class="font-mono text-[28px] text-red-600">✕ Approvazione delle azioni</p>
-                <h3>Il modello capisce cosa vogliamo solo interpretando il nostro testo</h3>
-                <p class="muted text-[28px]">La conferma la chiede lui, a parole. Se capisce male o se ne dimentica, prenota lo stesso: il nostro server non ha modo di fermarsi.</p>
-            </div>
-        </div>
-    </div>
-    <aside class="notes">Funziona, ma guardiamo cosa abbiamo dovuto inventare. [clic] Lo streaming e l'interfaccia: nel pannello eventi si vedeva il nostro formato, event: text, pezzi di testo senza id. L'abbiamo inventato noi, con un parser scritto a mano, e nessun altro client lo sa leggere. Ed è solo testo: per una scheda o un grafico dovremmo inventare un altro formato e un altro renderer. [clic] L'approvazione: la conferma la chiede il modello, a parole. Se capisce male o se ne dimentica, prenota lo stesso, perché il server non ha modo di mettere in pausa il run. Ogni app reinventa le stesse cose. Per fortuna ci sono degli standard: MCP per i tool, AG-UI per streaming e approvazioni, A2UI per l'interfaccia.</aside>
-</section>
-
-<section>
-    <div class="flex h-full flex-col justify-center gap-16">
-        <div class="flex flex-col gap-6">
-            <p class="eyebrow">Gli standard</p>
-            <h2>Un agente può…</h2>
-        </div>
-        <div class="grid grid-cols-4 gap-8">
-            <div class="card fragment flex flex-col gap-6">
-                <p class="font-mono text-[32px] text-red-600">MCP</p>
-                <h3>Usare l'app come strumento</h3>
-                <p class="muted text-[32px]">Un protocollo tra client e server: l'app espone tool e risorse, Claude, Codex e gli altri client li chiamano.</p>
-            </div>
-            <div class="card fragment flex flex-col gap-6">
-                <p class="font-mono text-[32px] text-red-600">AG-UI</p>
-                <h3>Dialogare con l'utente dentro l'app</h3>
-                <p class="muted text-[32px]">Un protocollo a eventi tra agente e frontend: testo in streaming, tool, stato e conferme.</p>
-            </div>
-            <div class="card fragment flex flex-col gap-6">
-                <p class="font-mono text-[32px] text-red-600">A2UI</p>
-                <h3>Comporre l'interfaccia</h3>
-                <p class="muted text-[32px]">Un formato dichiarativo per l'interfaccia: l'agente sceglie i componenti, l'app decide come mostrarli.</p>
-            </div>
-            <div class="card fragment flex flex-col gap-6">
-                <p class="font-mono text-[32px] text-red-600">WebMCP <span class="text-zinc-400">· domani</span></p>
-                <h3>Usare la pagina dal browser</h3>
-                <p class="muted text-[32px]">Una proposta di standard web: la pagina registra i suoi tool e l'agente del browser li chiama, con la sessione dell'utente.</p>
-            </div>
-        </div>
-    </div>
-    <aside class="notes">Ecco gli standard, ognuno apre la stessa app in un modo diverso. [clic] Con MCP un agente esterno, Claude, Codex, usa la nostra app come strumento: noi esponiamo i tool, il client li chiama. [clic] Con AG-UI l'agente sta dentro la nostra app e dialoga con l'utente: testo in streaming, chiamate ai tool, conferme. [clic] Con A2UI l'agente non risponde solo con del testo ma compone l'interfaccia, scegliendo dai nostri componenti. [clic] E domani WebMCP: è ancora una proposta, sperimentale in Chrome. La pagina stessa dichiara i suoi tool all'agente del browser. Ne parliamo alla fine. I primi tre si usano già oggi.</aside>
-</section>
-
-<section>
     <div class="flex h-full flex-col gap-14">
         <div class="flex flex-col gap-6">
             <p class="eyebrow">Il filo del talk</p>
@@ -197,5 +99,5 @@
             </div>
         </div>
     </div>
-    <aside class="notes">Questo è il messaggio del talk. Oggi una persona clicca + Agenda. [clic] Domani un client MCP chiama un tool. [clic] Oppure la chat nella pagina, con AG-UI e le schede A2UI. [clic] Oppure l'agente del browser con WebMCP. Ogni porta arriva alla stessa riga di codice. Funziona perché la logica vive già in un service o in una action, non dentro al controller: se l'abbiamo scritta tutta nel controller, prima va estratta. Nella chat AG-UI collega la pagina all'agente, ma l'azione la esegue l'agente sul server, chiamando il tool. Con le schede A2UI invece l'agente disegna la scheda, e il clic su + Agenda chiama la stessa rotta della pagina classica.</aside>
+    <aside class="notes">Questo è il messaggio del talk. Oggi una persona clicca + Agenda. [clic] Domani un client MCP chiama un tool. [clic] Oppure la chat nella pagina, con AG-UI e le schede A2UI. [clic] Oppure l'agente del browser con WebMCP: è ancora una proposta, sperimentale in Chrome, e ne parliamo alla fine. Le prime tre si usano già oggi. Ogni porta arriva alla stessa riga di codice. Funziona perché la logica vive già in un service o in una action, non dentro al controller: se l'abbiamo scritta tutta nel controller, prima va estratta. Nella chat AG-UI collega la pagina all'agente, ma l'azione la esegue l'agente sul server, chiamando il tool. Con le schede A2UI invece l'agente disegna la scheda, e il clic su + Agenda chiama la stessa rotta della pagina classica.</aside>
 </section>
