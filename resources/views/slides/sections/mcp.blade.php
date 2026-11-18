@@ -40,21 +40,21 @@
             <p class="fragment"><span class="text-red-600">← </span><span class="muted">"… aggiunto all'agenda (10:30, Sala A)."</span></p>
         </div>
         <div class="grid grid-cols-3 gap-10 border-t-2 border-zinc-200 pt-12 text-[32px]">
-            <div class="flex flex-col gap-3">
+            <div class="fragment flex flex-col gap-3">
                 <p><b>Tool</b> <span class="muted">· li sceglie il modello</span></p>
                 <p class="muted">Azioni: <code>add_to_agenda</code>, <code>book_workshop</code></p>
             </div>
-            <div class="flex flex-col gap-3">
+            <div class="fragment flex flex-col gap-3">
                 <p><b>Resource</b> <span class="muted">· le allega il client</span></p>
                 <p class="muted">Dati da leggere: <code>conference://schedule</code></p>
             </div>
-            <div class="flex flex-col gap-3">
+            <div class="fragment flex flex-col gap-3">
                 <p><b>Prompt</b> <span class="muted">· li sceglie l'utente</span></p>
                 <p class="muted">Richieste pronte: <code>plan_my_day</code></p>
             </div>
         </div>
     </div>
-    <aside class="notes">MCP è un protocollo tra due parti. Da una parte il client: Claude Desktop, Codex, VS Code, cioè l'applicazione che ha dentro il modello. Dall'altra il server, che per noi è la nostra app Laravel con il pacchetto laravel/mcp. Parlano JSON-RPC su HTTP, e l'utente si autentica con il suo token. [clic] La prima cosa che fa il client è chiedere: cosa sai fare? [clic] Il server risponde con l'elenco dei tool: nome, descrizione e schema dei parametri. Il modello non conosce la nostra app, la scopre da qui. Quindi descrizioni scritte bene contano quanto il codice. [clic] Quando l'utente chiede di aggiungere un talk, il modello sceglie add_to_agenda e il client lo chiama con i parametri. [clic] Il server esegue il nostro codice e restituisce il risultato, che torna al modello. Le primitive sono tre e cambia chi decide di usarle. I tool li sceglie il modello: sono le azioni. Le resource sono dati che il client legge e allega al contesto: noi esponiamo il programma della conferenza. I prompt sono richieste pronte che l'utente sceglie dal menu: noi ne abbiamo uno, plan_my_day, che vediamo nella demo.</aside>
+    <aside class="notes">MCP è un protocollo tra due parti. Da una parte il client: Claude Desktop, Codex, VS Code, cioè l'applicazione che ha dentro il modello. Dall'altra il server, che per noi è la nostra app Laravel con il pacchetto laravel/mcp. Parlano JSON-RPC su HTTP, e l'utente si autentica con il suo token. [clic] La prima cosa che fa il client è chiedere: cosa sai fare? [clic] Il server risponde con l'elenco dei tool: nome, descrizione e schema dei parametri. Il modello non conosce la nostra app, la scopre da qui. Quindi descrizioni scritte bene contano quanto il codice. [clic] Quando l'utente chiede di aggiungere un talk, il modello sceglie add_to_agenda e il client lo chiama con i parametri. [clic] Il server esegue il nostro codice e restituisce il risultato, che torna al modello. Le primitive sono tre e cambia chi decide di usarle. [clic] I tool li sceglie il modello: sono le azioni. [clic] Le resource sono dati che il client legge e allega al contesto: noi esponiamo il programma della conferenza. [clic] I prompt sono richieste pronte che l'utente sceglie dal menu: noi ne abbiamo uno, plan_my_day, che vediamo nella demo.</aside>
 </section>
 
 <section data-background-color="#ffffff" class="code-slide">

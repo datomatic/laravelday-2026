@@ -68,7 +68,7 @@
 <section>
     <div class="flex h-full flex-col gap-12">
         <div class="flex flex-col gap-6">
-            <p class="eyebrow">Agent-User Interaction Protocol</p>
+            <p class="eyebrow">Agent-User Interaction Protocol · v1.0 del 17 settembre 2026</p>
             <h2>AG-UI: un flusso di eventi tra agente e pagina</h2>
         </div>
         <table class="w-full text-left text-[30px]">
@@ -94,7 +94,7 @@
             <p>Lato server va bene <code>neuron-ai</code> o <code>laravel/ai</code>: noi usiamo neuron-ai, più maturo e completo.</p>
         </div>
     </div>
-    <aside class="notes">AG-UI non dice niente sul modello: standardizza solo gli eventi tra agente e interfaccia. Sono una trentina, divisi per gruppi: l'inizio e la fine del run, il testo che arriva a pezzi, le chiamate ai tool, lo stato condiviso, il ragionamento del modello, i sub-agenti, e degli eventi custom per tutto il resto. Non serve conoscerli tutti: la pagina ascolta quelli che le servono e ignora gli altri. Gli eventi viaggiano come Server-Sent Events sulla risposta di una POST, e nel browser li legge @ag-ui/client. Lato server serve un agente che produca questi eventi: in Laravel si può fare sia con neuron-ai sia con laravel/ai, l'SDK ufficiale. Noi usiamo neuron-ai perché oggi è più maturo e più completo.</aside>
+    <aside class="notes">AG-UI è giovane: la versione 1.0 è uscita il 17 settembre, due mesi fa. AG-UI non dice niente sul modello: standardizza solo gli eventi tra agente e interfaccia. Sono una trentina, divisi per gruppi: l'inizio e la fine del run, il testo che arriva a pezzi, le chiamate ai tool, lo stato condiviso, il ragionamento del modello, i sub-agenti, e degli eventi custom per tutto il resto. Non serve conoscerli tutti: la pagina ascolta quelli che le servono e ignora gli altri. Gli eventi viaggiano come Server-Sent Events sulla risposta di una POST, e nel browser li legge @ag-ui/client. Lato server serve un agente che produca questi eventi: in Laravel si può fare sia con neuron-ai sia con laravel/ai, l'SDK ufficiale. Noi usiamo neuron-ai perché oggi è più maturo e più completo.</aside>
 </section>
 
 <section data-background-color="#ffffff" class="code-slide">

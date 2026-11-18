@@ -64,7 +64,7 @@
             @include('partials.chat', $stage === App\Enums\DemoStage::Generative ? [
                 'suggestions' => [
                     'Quali talk parlano di AI? Mostrameli.',
-                    'Prenotami il workshop sugli agenti, sono CTO di Acme.',
+                    "Voglio iscrivermi al workshop su Laravel AI.",
                     'Come vanno le iscrizioni ai workshop?',
                 ],
             ] : [])
