@@ -32,6 +32,10 @@ class AgentController extends Controller
             ? $agent->submitInputs($request->all(), new AGUIInputTranslator)->events()
             : $agent->stream(new UserMessage($request->prompt()));
 
+        // A turn chains several model calls (the admin one writes a whole interface, and retries it if invalid):
+        // the default 60 seconds would kill the stream halfway, without even an error event for the page.
+        set_time_limit(180);
+
         // Start the run now: a refused run (e.g. an approval still pending) becomes an HTTP error, not a stream.
         $events->valid();
 

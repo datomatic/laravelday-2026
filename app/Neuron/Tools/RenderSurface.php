@@ -38,11 +38,23 @@ class RenderSurface extends Tool
 
     public function __invoke(string $components): ToolOutput
     {
-        $components = json_decode($components, true);
+        $decoded = json_decode($components, true);
+        $problem = is_array($decoded) ? 'è un oggetto, serve un array' : json_last_error_msg();
 
-        if (! is_array($components)) {
-            return ToolOutput::error('components non è un array JSON valido. Correggilo e richiama render_surface.');
+        if (! is_array($decoded) || ! array_is_list($decoded)) {
+            // The arguments never reach the log otherwise: keep them to see what the model got wrong.
+            logger()->warning('render_surface received invalid components', [
+                'error' => $problem,
+                'components' => str($components)->limit(4000)->toString(),
+            ]);
+
+            return ToolOutput::error(sprintf(
+                'components non è un array JSON valido (%s). Passa solo l\'array, da [ a ], senza testo intorno, con le virgolette nelle stringhe escapate e senza virgole finali. Correggilo e richiama render_surface.',
+                $problem,
+            ));
         }
+
+        $components = $decoded;
 
         $errors = $this->validator->errors($components);
 

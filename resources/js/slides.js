@@ -35,7 +35,7 @@ Reveal.on('pdf-ready', () => {
 });
 
 // The demos open in the same window and carry the slide they were opened from, so they can link back to it.
-document.querySelectorAll('.reveal section.demo a[href]').forEach((link) => {
+document.querySelectorAll('.reveal section.demo a[href], .reveal a[data-demo-link]').forEach((link) => {
     link.addEventListener('click', () => {
         const url = new URL(link.href);
         url.searchParams.set('slide', location.hash);

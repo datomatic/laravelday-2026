@@ -11,6 +11,7 @@ use App\Models\Workshop;
 use App\Models\WorkshopBooking;
 use App\Neuron\Tools\GetStatistics;
 use App\Neuron\Tools\RenderSurface;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @return array<mixed>
@@ -123,5 +124,16 @@ test('render surface sends the errors back to the model so it can retry', functi
         ->and($result->getText())->toContain($error);
 })->with([
     'invalid tree' => [json_encode([['id' => 'root', 'component' => 'Column', 'children' => ['missing']]]), 'il figlio "missing" non esiste'],
-    'not json' => ['non è json', 'components non è un array JSON valido'],
+    'not json' => ['non è json', 'components non è un array JSON valido (Syntax error)'],
+    'an object instead of the list' => [json_encode(['components' => []]), 'è un oggetto, serve un array'],
 ]);
+
+test('render surface logs the components it cannot decode', function () {
+    Log::spy();
+
+    app(RenderSurface::class)('[{"id": "root",}]');
+
+    Log::shouldHaveReceived('warning')->once()->with('render_surface received invalid components', Mockery::on(
+        fn (array $context) => $context['components'] === '[{"id": "root",}]' && $context['error'] === 'Syntax error',
+    ));
+});
